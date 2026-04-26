@@ -12,41 +12,43 @@ class NameAnalyzerService {
   final _random = Random();
   final _uuid = const Uuid();
 
-  // ===== ANALYZE NAME =====
+  // ===== PUBLIC: ANALYZE =====
   AnalysisResult analyze(String name, GenderContext context) {
-    final cleanName = name.trim();
-    final capitalizedName = _capitalize(cleanName);
-    final seed = _nameSeed(cleanName);
+    final clean = name.trim();
+    final capitalized = _capitalize(clean);
+    final seed = _nameSeed(clean);
 
-    final intro = _pickIntro(capitalizedName, seed);
-    final traits = _pickTraits(context, seed, capitalizedName);
-    final twist = _pick(ContentPools.twists, seed + 999);
-    final chaosScore = _calculateChaos(cleanName, seed);
-    final chaosLevel = _chaoLevel(chaosScore);
-    final ending = _riskEnding(chaosLevel);
-    final disclaimer = _pickDisclaimer(capitalizedName, seed);
-    final flagEmoji = _pickFlag(chaosLevel, seed);
+    final intro    = _pickIntro(capitalized, seed);
+    final traits   = _pickTraits(context, seed, capitalized);
+    final twist    = _pick(ContentPools.twists, seed + 999);
+    final score    = _calculateChaos(clean, seed);
+    final level    = _chaosLevel(score);
+    final ending   = _riskEnding(level);
+    final disc     = _pickDisclaimer(capitalized, seed);
+    final flag     = _pickFlag(level);
 
     final result = AnalysisResult(
       id: _uuid.v4(),
-      name: capitalizedName,
+      name: capitalized,
       genderContext: context,
       intro: intro,
       traits: traits,
       twist: twist,
       ending: ending,
-      chaosLevel: chaosLevel,
-      chaosScore: chaosScore,
-      disclaimer: disclaimer,
-      flagEmoji: flagEmoji,
+      chaosLevel: level,
+      chaosScore: score,
+      disclaimer: disc,
+      flagEmoji: flag,
       analyzedAt: DateTime.now(),
     );
 
+    // Save in background — never await, never throw
     _saveToHistory(result);
     return result;
   }
 
-  // ===== HELPERS =====
+  // ===== PRIVATE HELPERS =====
+
   String _capitalize(String name) {
     if (name.isEmpty) return name;
     return name[0].toUpperCase() + name.substring(1).toLowerCase();
@@ -61,55 +63,54 @@ class NameAnalyzerService {
   }
 
   String _pick(List<String> pool, int seed) {
-    // Use both seed and random for variation on re-analysis
+    if (pool.isEmpty) return '';
     final index = (_random.nextInt(pool.length) + seed) % pool.length;
     return pool[index];
   }
 
   String _pickIntro(String name, int seed) {
-    final template = _pick(ContentPools.intros, seed);
-    return template.replaceAll('{name}', name);
+    return _pick(ContentPools.intros, seed)
+        .replaceAll('{name}', name);
   }
 
   List<String> _pickTraits(GenderContext context, int seed, String name) {
     final traits = <String>[];
-    final lowerName = name.toLowerCase();
 
-    // Check for special name response
-    List<String>? specialTraits = ContentPools.specialNames[lowerName];
-    if (specialTraits != null && specialTraits.isNotEmpty) {
-      traits.addAll(specialTraits.take(2));
+    // Special name overrides
+    final special =
+        ContentPools.specialNames[name.toLowerCase()];
+    if (special != null && special.isNotEmpty) {
+      traits.addAll(special.take(2));
     }
 
-    // General traits (always 2-3)
-    final generalPool = List<String>.from(ContentPools.generalTraits);
-    generalPool.shuffle(Random(seed));
-    int generalCount = 3 - traits.length;
-    traits.addAll(generalPool.take(generalCount));
+    // General traits
+    final general = List<String>.from(ContentPools.generalTraits)
+      ..shuffle(Random(seed));
+    traits.addAll(general.take((3 - traits.length).clamp(0, 3)));
 
-    // Context-specific traits (1-2)
-    List<String> contextPool;
+    // Context traits
+    final List<String> ctxPool;
     switch (context) {
       case GenderContext.boyfriend:
-        contextPool = ContentPools.boyfriendTraits;
+        ctxPool = ContentPools.boyfriendTraits;
         break;
       case GenderContext.girlfriend:
-        contextPool = ContentPools.girlfriendTraits;
+        ctxPool = ContentPools.girlfriendTraits;
         break;
       case GenderContext.crush:
-        contextPool = ContentPools.crushTraits;
+        ctxPool = ContentPools.crushTraits;
         break;
       case GenderContext.ex:
-        contextPool = ContentPools.exTraits;
+        ctxPool = ContentPools.exTraits;
         break;
       case GenderContext.general:
-        contextPool = ContentPools.generalTraits;
+        ctxPool = ContentPools.generalTraits;
         break;
     }
 
-    if (contextPool.isNotEmpty) {
-      contextPool.shuffle(Random(seed + 42));
-      traits.addAll(contextPool.take(2));
+    if (ctxPool.isNotEmpty) {
+      final shuffled = List<String>.from(ctxPool)..shuffle(Random(seed + 42));
+      traits.addAll(shuffled.take(2));
     }
 
     traits.shuffle(Random(seed + 7));
@@ -117,20 +118,14 @@ class NameAnalyzerService {
   }
 
   int _calculateChaos(String name, int seed) {
-    // Base score from name seed
-    int score = (seed % 60) + 20; // 20–80 base
-
-    // Adjust for name length (shorter names = more chaos lol)
+    int score = (seed % 60) + 20;
     if (name.length <= 4) score += 10;
     if (name.length >= 8) score -= 5;
-
-    // Random variance (different each analysis)
     score += _random.nextInt(20) - 10;
-
     return score.clamp(5, 100);
   }
 
-  ChaosLevel _chaoLevel(int score) {
+  ChaosLevel _chaosLevel(int score) {
     if (score < 30) return ChaosLevel.low;
     if (score < 60) return ChaosLevel.medium;
     if (score < 85) return ChaosLevel.high;
@@ -151,41 +146,53 @@ class NameAnalyzerService {
   }
 
   String _pickDisclaimer(String name, int seed) {
-    final template = _pick(ContentPools.disclaimers, seed + 456);
-    return template.replaceAll('{name}', name);
+    return _pick(ContentPools.disclaimers, seed + 456)
+        .replaceAll('{name}', name);
   }
 
-  String _pickFlag(ChaosLevel level, int seed) {
+  String _pickFlag(ChaosLevel level) {
     switch (level) {
-      case ChaosLevel.low:
-        return '💚';
-      case ChaosLevel.medium:
-        return '🚩';
-      case ChaosLevel.high:
-        return '🚩🚩';
-      case ChaosLevel.extreme:
-        return '🚩🚩🚩';
+      case ChaosLevel.low:     return '💚';
+      case ChaosLevel.medium:  return '🚩';
+      case ChaosLevel.high:    return '🚩🚩';
+      case ChaosLevel.extreme: return '🚩🚩🚩';
     }
   }
 
   // ===== HISTORY =====
-  Future<void> _saveToHistory(AnalysisResult result) async {
-    final prefs = await SharedPreferences.getInstance();
-    final history = prefs.getStringList('history') ?? [];
-    history.insert(0, result.toJsonString());
-    // Keep last 50
-    if (history.length > 50) history.removeLast();
-    await prefs.setStringList('history', history);
+
+  /// Fire-and-forget — runs in background, never throws
+  void _saveToHistory(AnalysisResult result) {
+    SharedPreferences.getInstance().then((prefs) {
+      final history = prefs.getStringList('history') ?? [];
+      history.insert(0, result.toJsonString());
+      if (history.length > 50) history.removeLast();
+      prefs.setStringList('history', history);
+    }).catchError((_) {});
   }
 
   Future<List<AnalysisResult>> getHistory() async {
-    final prefs = await SharedPreferences.getInstance();
-    final history = prefs.getStringList('history') ?? [];
-    return history.map((s) => AnalysisResult.fromJsonString(s)).toList();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final history = prefs.getStringList('history') ?? [];
+      final results = <AnalysisResult>[];
+      for (final s in history) {
+        try {
+          results.add(AnalysisResult.fromJsonString(s));
+        } catch (_) {
+          // Skip corrupted entries
+        }
+      }
+      return results;
+    } catch (_) {
+      return [];
+    }
   }
 
   Future<void> clearHistory() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('history');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('history');
+    } catch (_) {}
   }
 }
