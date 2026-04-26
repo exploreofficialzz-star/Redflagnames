@@ -25,7 +25,6 @@ class _HomeScreenState extends State<HomeScreen>
   BannerAd? _bannerAd;
   bool _bannerLoaded = false;
 
-  // Floating emoji particles
   final List<Map<String, dynamic>> _emojis = [
     {'emoji': '🚩', 'x': 0.1, 'y': 0.15},
     {'emoji': '💀', 'x': 0.85, 'y': 0.12},
@@ -43,14 +42,17 @@ class _HomeScreenState extends State<HomeScreen>
       duration: const Duration(milliseconds: 600),
     );
     _loadBanner();
-    SoundService.instance.initialize();
+    // Fire-and-forget — do NOT await here to avoid blocking UI
+    SoundService.instance.initialize().catchError((_) {});
   }
 
   void _loadBanner() {
-    _bannerAd = AdService.instance.createBannerAd()
-      ..load().then((_) {
-        if (mounted) setState(() => _bannerLoaded = true);
-      });
+    try {
+      _bannerAd = AdService.instance.createBannerAd()
+        ..load().then((_) {
+          if (mounted) setState(() => _bannerLoaded = true);
+        }).catchError((_) {});
+    } catch (_) {}
   }
 
   @override
@@ -61,16 +63,15 @@ class _HomeScreenState extends State<HomeScreen>
     super.dispose();
   }
 
-  // ===== CONTEXT OPTIONS =====
   static const _contexts = [
-    {'value': GenderContext.general, 'label': '👤 General', 'desc': 'Anyone'},
-    {'value': GenderContext.boyfriend, 'label': '💙 Boyfriend', 'desc': 'He/Him'},
-    {'value': GenderContext.girlfriend, 'label': '💕 Girlfriend', 'desc': 'She/Her'},
-    {'value': GenderContext.crush, 'label': '😍 Crush', 'desc': 'They had you at hello'},
-    {'value': GenderContext.ex, 'label': '💔 Ex', 'desc': 'Never again'},
+    {'value': GenderContext.general, 'label': '👤 General'},
+    {'value': GenderContext.boyfriend, 'label': '💙 Boyfriend'},
+    {'value': GenderContext.girlfriend, 'label': '💕 Girlfriend'},
+    {'value': GenderContext.crush, 'label': '😍 Crush'},
+    {'value': GenderContext.ex, 'label': '💔 Ex'},
   ];
 
-  // ===== ANALYZE =====
+  // ===== CORE FIX: try/finally ensures _isAnalyzing always resets =====
   Future<void> _analyze() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
@@ -79,42 +80,72 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     setState(() => _isAnalyzing = true);
-    await SoundService.instance.playAnalyzing();
 
-    // Simulate "scanning" drama
-    await Future.delayed(const Duration(milliseconds: 1800));
+    try {
+      // Play woosh sound — wrapped so it never blocks
+      try {
+        await SoundService.instance.playAnalyzing();
+      } catch (_) {}
 
-    final result = NameAnalyzerService.instance.analyze(name, _selectedContext);
+      // Dramatic scanning delay
+      await Future.delayed(const Duration(milliseconds: 1800));
 
-    // Play appropriate sound
-    switch (result.chaosLevel) {
-      case ChaosLevel.low:
-        await SoundService.instance.playGreenFlag();
-        break;
-      case ChaosLevel.high:
-      case ChaosLevel.extreme:
-        await SoundService.instance.playLaugh();
-        break;
-      default:
-        await SoundService.instance.playReveal();
-    }
+      // Generate result
+      final result = NameAnalyzerService.instance.analyze(
+        name,
+        _selectedContext,
+      );
 
-    if (!mounted) return;
+      // Play result sound — wrapped so it never blocks
+      try {
+        switch (result.chaosLevel) {
+          case ChaosLevel.low:
+            await SoundService.instance.playGreenFlag();
+            break;
+          case ChaosLevel.high:
+          case ChaosLevel.extreme:
+            await SoundService.instance.playLaugh();
+            break;
+          default:
+            await SoundService.instance.playReveal();
+        }
+      } catch (_) {}
 
-    // Show notification
-    await NotificationService.instance.showResultNotification(
-      name,
-      result.chaosLevelText,
-    );
+      // Show notification — wrapped, permission may be denied
+      try {
+        await NotificationService.instance
+            .showResultNotification(name, result.chaosLevelText);
+      } catch (_) {}
 
-    setState(() => _isAnalyzing = false);
+      if (!mounted) return;
 
-    // Navigate to result
-    await Navigator.of(context).pushNamed('/result', arguments: result);
+      // Navigate to result screen
+      await Navigator.of(context).pushNamed('/result', arguments: result);
 
-    // Show interstitial AFTER result screen
-    if (mounted) {
-      await AdService.instance.showInterstitial(context);
+      // Show interstitial AFTER returning from result — wrapped
+      if (mounted) {
+        try {
+          await AdService.instance.showInterstitial(context);
+        } catch (_) {}
+      }
+    } catch (e) {
+      debugPrint('❌ Analyze error: $e');
+      // Show a snackbar so user knows something went wrong
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Something went wrong — please try again 😅'),
+            backgroundColor: const Color(0xFFFF3B5C),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    } finally {
+      // ALWAYS reset loading state — this is the critical fix
+      if (mounted) setState(() => _isAnalyzing = false);
     }
   }
 
@@ -124,13 +155,8 @@ class _HomeScreenState extends State<HomeScreen>
       backgroundColor: const Color(0xFF0D0D1A),
       body: Stack(
         children: [
-          // Background gradient
           _buildBackground(),
-
-          // Floating emoji particles
           ..._buildFloatingEmojis(),
-
-          // Main content
           SafeArea(
             child: Column(
               children: [
@@ -157,9 +183,9 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                   ),
                 ),
-
-                // Banner Ad (always visible)
-                if (_bannerLoaded && _bannerAd != null && !AdService.instance.isPremium)
+                if (_bannerLoaded &&
+                    _bannerAd != null &&
+                    !AdService.instance.isPremium)
                   SizedBox(
                     height: 60,
                     child: AdWidget(ad: _bannerAd!),
@@ -206,9 +232,7 @@ class _HomeScreenState extends State<HomeScreen>
               end: -15,
               duration: Duration(milliseconds: 2000 + (i * 300)),
               curve: Curves.easeInOut,
-            )
-            .then()
-            .moveY(begin: -15, end: 0, duration: Duration(milliseconds: 2000 + (i * 300))),
+            ),
       );
     }).toList();
   }
@@ -219,7 +243,6 @@ class _HomeScreenState extends State<HomeScreen>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Logo area
             Row(
               children: [
                 Container(
@@ -252,50 +275,28 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ],
             ),
-            // History button
             Row(
               children: [
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pushNamed('/history'),
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.history_rounded,
-                        color: Colors.white70, size: 22),
-                  ),
+                _iconBtn(
+                  icon: Icons.history_rounded,
+                  onTap: () =>
+                      Navigator.of(context).pushNamed('/history'),
                 ),
                 const SizedBox(width: 8),
-                GestureDetector(
+                _iconBtn(
+                  icon: SoundService.instance.soundEnabled
+                      ? Icons.volume_up_rounded
+                      : Icons.volume_off_rounded,
                   onTap: () async {
                     await SoundService.instance.toggleSound();
-                    setState(() {});
+                    if (mounted) setState(() {});
                   },
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      SoundService.instance.soundEnabled
-                          ? Icons.volume_up_rounded
-                          : Icons.volume_off_rounded,
-                      color: Colors.white70,
-                      size: 22,
-                    ),
-                  ),
                 ),
               ],
             ),
           ],
         ),
-
         const SizedBox(height: 32),
-
-        // Hero text
         Text(
           'Enter a name.\nGet the truth. 😂',
           textAlign: TextAlign.center,
@@ -306,18 +307,27 @@ class _HomeScreenState extends State<HomeScreen>
             height: 1.2,
           ),
         ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.2, end: 0),
-
         const SizedBox(height: 8),
-
         Text(
           'Purely for entertainment — no one is safe 🚩',
           textAlign: TextAlign.center,
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            color: Colors.white54,
-          ),
+          style: GoogleFonts.poppins(fontSize: 13, color: Colors.white54),
         ).animate().fadeIn(delay: 300.ms, duration: 600.ms),
       ],
+    );
+  }
+
+  Widget _iconBtn({required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: Colors.white70, size: 22),
+      ),
     );
   }
 
@@ -325,13 +335,9 @@ class _HomeScreenState extends State<HomeScreen>
     return AnimatedBuilder(
       animation: _shakeController,
       builder: (context, child) {
-        final offset = _shakeController.value == 0
-            ? 0.0
-            : 8 * (0.5 - (_shakeController.value % 0.1) / 0.1).abs();
-        return Transform.translate(
-          offset: Offset(offset, 0),
-          child: child,
-        );
+        final t = _shakeController.value;
+        final offset = t == 0 ? 0.0 : 8 * (0.5 - (t % 0.1) / 0.1).abs();
+        return Transform.translate(offset: Offset(offset, 0), child: child);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -350,16 +356,13 @@ class _HomeScreenState extends State<HomeScreen>
             fontSize: 22,
             fontWeight: FontWeight.w700,
             color: Colors.white,
-            letterSpacing: 0.5,
           ),
           textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.done,
           onSubmitted: (_) => _analyze(),
           decoration: InputDecoration(
             hintText: 'Enter a name...',
-            hintStyle: GoogleFonts.poppins(
-              fontSize: 18,
-              color: Colors.white24,
-            ),
+            hintStyle: GoogleFonts.poppins(fontSize: 18, color: Colors.white24),
             filled: true,
             fillColor: const Color(0xFF1E1E35),
             border: OutlineInputBorder(
@@ -368,7 +371,8 @@ class _HomeScreenState extends State<HomeScreen>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
-              borderSide: const BorderSide(color: Color(0xFFFF3B5C), width: 2),
+              borderSide:
+                  const BorderSide(color: Color(0xFFFF3B5C), width: 2),
             ),
             prefixIcon: const Padding(
               padding: EdgeInsets.all(14),
@@ -403,22 +407,25 @@ class _HomeScreenState extends State<HomeScreen>
             separatorBuilder: (_, __) => const SizedBox(width: 8),
             itemBuilder: (context, i) {
               final ctx = _contexts[i];
-              final isSelected = _selectedContext == ctx['value'];
+              final isSelected =
+                  _selectedContext == ctx['value'] as GenderContext;
               return GestureDetector(
-                onTap: () async {
-                  await SoundService.instance.playTap();
-                  setState(() => _selectedContext = ctx['value'] as GenderContext);
+                onTap: () {
+                  setState(() =>
+                      _selectedContext = ctx['value'] as GenderContext);
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
                     gradient: isSelected
                         ? const LinearGradient(
                             colors: [Color(0xFFFF3B5C), Color(0xFFFF6B9D)],
                           )
                         : null,
-                    color: isSelected ? null : const Color(0xFF1E1E35),
+                    color:
+                        isSelected ? null : const Color(0xFF1E1E35),
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: isSelected
@@ -439,9 +446,11 @@ class _HomeScreenState extends State<HomeScreen>
                     ctx['label'] as String,
                     style: GoogleFonts.poppins(
                       fontSize: 13,
-                      fontWeight:
-                          isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected ? Colors.white : Colors.white60,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color:
+                          isSelected ? Colors.white : Colors.white60,
                     ),
                   ),
                 ),
@@ -457,22 +466,15 @@ class _HomeScreenState extends State<HomeScreen>
     return SizedBox(
       width: double.infinity,
       height: 64,
-      child: ElevatedButton(
-        onPressed: _isAnalyzing ? null : _analyze,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          disabledBackgroundColor: Colors.transparent,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          padding: EdgeInsets.zero,
-        ),
-        child: Ink(
+      child: GestureDetector(
+        onTap: _isAnalyzing ? null : _analyze,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
             gradient: _isAnalyzing
                 ? const LinearGradient(
-                    colors: [Color(0xFF555), Color(0xFF444)])
+                    colors: [Color(0xFF444), Color(0xFF333)],
+                  )
                 : const LinearGradient(
                     colors: [Color(0xFFFF1744), Color(0xFFFF6B9D)],
                     begin: Alignment.topLeft,
@@ -489,8 +491,7 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                   ],
           ),
-          child: Container(
-            alignment: Alignment.center,
+          child: Center(
             child: _isAnalyzing
                 ? Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -514,23 +515,21 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     ],
                   )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '🚩  Analyze This Name',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
+                : Text(
+                    '🚩  Analyze This Name',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
                   ),
           ),
         ),
       ),
-    ).animate().fadeIn(delay: 600.ms).scale(begin: const Offset(0.9, 0.9));
+    ).animate().fadeIn(delay: 600.ms).scale(
+          begin: const Offset(0.9, 0.9),
+          end: const Offset(1, 1),
+        );
   }
 
   Widget _buildQuickStats() {
@@ -546,7 +545,7 @@ class _HomeScreenState extends State<HomeScreen>
         children: [
           _statItem('😂', '10M+', 'Analyses Done'),
           _divider(),
-          _statItem('🚩', '98%', 'Accuracy*'),
+          _statItem('🚩', '98%', 'Accuracy*\n*satire'),
           _divider(),
           _statItem('💀', '∞', 'Name Combos'),
         ],
@@ -569,28 +568,16 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         Text(
           label,
-          style: GoogleFonts.poppins(
-            fontSize: 11,
-            color: Colors.white38,
-          ),
+          textAlign: TextAlign.center,
+          style: GoogleFonts.poppins(fontSize: 11, color: Colors.white38),
         ),
-        if (label.contains('Accuracy'))
-          Text(
-            '*satire',
-            style: GoogleFonts.poppins(
-              fontSize: 9,
-              color: Colors.white24,
-            ),
-          ),
       ],
     );
   }
 
-  Widget _divider() {
-    return Container(
-      width: 1,
-      height: 50,
-      color: Colors.white.withOpacity(0.08),
-    );
-  }
+  Widget _divider() => Container(
+        width: 1,
+        height: 50,
+        color: Colors.white.withOpacity(0.08),
+      );
 }
