@@ -9,6 +9,7 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
   final _random = Random();
+  bool _initialized = false;
 
   static const List<String> _messages = [
     "🚩 You've been thinking about that name again, haven't you?",
@@ -19,39 +20,48 @@ class NotificationService {
     "😅 Your daily dose of relationship reality check is here!",
     "🚨 ALERT: Unanalyzed names detected in your life!",
     "💅 Ready to expose your situationship? Let's go.",
-    "🤣 The results for today are... spicy. Come check.",
+    "🤣 Today's results are... spicy. Come check.",
     "🏃 Are you running from the results? Come back!",
   ];
 
   Future<void> initialize() async {
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
-    const settings = InitializationSettings(
-      android: androidSettings,
-      iOS: iosSettings,
-    );
-    await _plugin.initialize(
-      settings,
-      onDidReceiveNotificationResponse: _onTap,
-    );
-    await _requestPermissions();
-    await _scheduleEngagement();
+    if (_initialized) return;
+    try {
+      const androidSettings =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+      const iosSettings = DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
+      const settings = InitializationSettings(
+        android: androidSettings,
+        iOS: iosSettings,
+      );
+      await _plugin.initialize(settings,
+          onDidReceiveNotificationResponse: _onTap);
+      await _requestPermissions();
+      _initialized = true;
+      // Schedule in background — don't block init
+      _scheduleEngagement().catchError((_) {});
+    } catch (_) {
+      _initialized = true; // mark done even on error
+    }
   }
 
   Future<void> _requestPermissions() async {
-    await _plugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
-    await _plugin
-        .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>()
-        ?.requestPermissions(alert: true, badge: true, sound: true);
+    try {
+      await _plugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.requestNotificationsPermission();
+    } catch (_) {}
+    try {
+      await _plugin
+          .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(alert: true, badge: true, sound: true);
+    } catch (_) {}
   }
 
   static const AndroidNotificationDetails _androidDetails =
@@ -62,7 +72,7 @@ class NotificationService {
     importance: Importance.high,
     priority: Priority.high,
     playSound: true,
-    sound: null, // Uses device DEFAULT sound
+    sound: null, // device default sound
     enableLights: true,
     color: Color(0xFFFF3B5C),
     ledColor: Color(0xFFFF3B5C),
@@ -72,11 +82,12 @@ class NotificationService {
     largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
   );
 
-  static const DarwinNotificationDetails _iosDetails = DarwinNotificationDetails(
+  static const DarwinNotificationDetails _iosDetails =
+      DarwinNotificationDetails(
     presentAlert: true,
     presentBadge: true,
     presentSound: true,
-    sound: null, // Uses default iOS sound
+    sound: null, // device default sound
   );
 
   static const NotificationDetails _details = NotificationDetails(
@@ -84,39 +95,49 @@ class NotificationService {
     iOS: _iosDetails,
   );
 
-  Future<void> showResultNotification(String name, String chaosLevel) async {
-    await _plugin.show(
-      DateTime.now().millisecond,
-      '🚩 $name Analysis Complete!',
-      'Risk: $chaosLevel — Tap to see the full report!',
-      _details,
-    );
+  /// Called after each analysis — wrapped so it NEVER throws to caller
+  Future<void> showResultNotification(
+      String name, String chaosLevel) async {
+    try {
+      await _plugin.show(
+        DateTime.now().millisecondsSinceEpoch % 100000,
+        '🚩 $name Analysis Complete!',
+        'Risk: $chaosLevel — Tap to see the full report!',
+        _details,
+      );
+    } catch (_) {}
   }
 
   Future<void> _scheduleEngagement() async {
-    await _plugin.cancelAll();
+    try {
+      await _plugin.cancelAll();
+    } catch (_) {}
+
     await _showEngagement(1, '☀️ Morning RedFlag Check', 10, 0);
     await _showEngagement(2, '😂 Afternoon Chaos Report', 14, 30);
     await _showEngagement(3, '🚩 Evening Name Analysis', 20, 0);
   }
 
-  Future<void> _showEngagement(int id, String title, int h, int m) async {
-    final body = _messages[_random.nextInt(_messages.length)];
-    final androidDetails = AndroidNotificationDetails(
-      'redflag_daily_$id',
-      'Daily Reminders',
-      channelDescription: 'Daily fun notifications',
-      importance: Importance.defaultImportance,
-      priority: Priority.defaultPriority,
-      playSound: true,
-      sound: null,
-      icon: '@mipmap/ic_launcher',
-    );
-    final details = NotificationDetails(
-      android: androidDetails,
-      iOS: _iosDetails,
-    );
-    await _plugin.show(id, title, body, details);
+  Future<void> _showEngagement(
+      int id, String title, int hour, int minute) async {
+    try {
+      final body = _messages[_random.nextInt(_messages.length)];
+      final androidDetails = AndroidNotificationDetails(
+        'redflag_daily_$id',
+        'Daily Reminders',
+        channelDescription: 'Daily fun notifications',
+        importance: Importance.defaultImportance,
+        priority: Priority.defaultPriority,
+        playSound: true,
+        sound: null,
+        icon: '@mipmap/ic_launcher',
+      );
+      final details = NotificationDetails(
+        android: androidDetails,
+        iOS: _iosDetails,
+      );
+      await _plugin.show(id, title, body, details);
+    } catch (_) {}
   }
 
   void _onTap(NotificationResponse response) {}
