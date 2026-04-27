@@ -1,0 +1,235 @@
+name: 🍎 iOS — Build & Release
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags: [ 'v*.*.*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: '3.24.5'
+  APP_NAME: 'RedFlagNames'
+
+jobs:
+  build_ios:
+    name: 🍎 Build iOS
+    runs-on: macos-latest
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🐦 Setup Flutter ${{ env.FLUTTER_VERSION }}
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: 📦 Get dependencies
+        run: flutter pub get
+
+      - name: 🔍 Analyze code
+        run: flutter analyze --no-fatal-infos
+        continue-on-error: true
+
+      - name: 🔐 Import signing certificate
+        env:
+          IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          CERT_PATH=$RUNNER_TEMP/certificate.p12
+          echo -n "$IOS_CERTIFICATE_BASE64" | base64 --decode -o "$CERT_PATH"
+          security import "$CERT_PATH" \
+            -P "$IOS_CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 \
+            -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          echo "✅ Certificate imported"
+        continue-on-error: true
+
+      - name: 📋 Install provisioning profile
+        env:
+          IOS_PROVISION_PROFILE_BASE64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
+        run: |
+          PP_PATH=$RUNNER_TEMP/profile.mobileprovision
+          echo -n "$IOS_PROVISION_PROFILE_BASE64" | base64 --decode -o "$PP_PATH"
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp "$PP_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/
+          echo "✅ Provisioning profile installed"
+        continue-on-error: true
+
+      - name: 🍫 Install CocoaPods
+        run: cd ios && pod install --repo-update
+        continue-on-error: true
+
+      - name: 🚀 Build Release IPA (Signed)
+        run: |
+          flutter build ipa --release \
+            --build-name=1.0.${{ github.run_number }} \
+            --build-number=${{ github.run_number }} \
+            --export-options-plist=ios/ExportOptions.plist
+        continue-on-error: true
+
+      - name: 🏗️ Build Unsigned Archive (fallback)
+        run: |
+          flutter build ios --release --no-codesign \
+            --build-name=1.0.${{ github.run_number }} \
+            --build-number=${{ github.run_number }}
+          cd ios && xcodebuild \
+            -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            archive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet 2>&1 | tail -5 || true
+        continue-on-error: true
+
+      - name: 📂 Collect artifacts
+        run: |
+          mkdir -p artifacts/ios
+          if ls build/ios/ipa/*.ipa 2>/dev/null; then
+            cp build/ios/ipa/*.ipa \
+               "artifacts/ios/${{ env.APP_NAME }}-${{ github.run_number }}-signed.ipa"
+            echo "✅ Signed IPA collected"
+          fi
+          if [ -d "$RUNNER_TEMP/Runner.xcarchive" ]; then
+            zip -r \
+              "artifacts/ios/${{ env.APP_NAME }}-${{ github.run_number }}-archive.zip" \
+              "$RUNNER_TEMP/Runner.xcarchive" 2>/dev/null || true
+            echo "✅ Archive collected"
+          fi
+          ls -lh artifacts/ios/ 2>/dev/null || echo "No artifacts"
+        continue-on-error: true
+
+      - name: 📤 Upload Signed IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-signed-ipa-${{ github.run_number }}
+          path: artifacts/ios/*-signed.ipa
+          retention-days: 60
+        continue-on-error: true
+
+      - name: 📤 Upload Unsigned Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-unsigned-archive-${{ github.run_number }}
+          path: artifacts/ios/*-archive.zip
+          retention-days: 60
+        continue-on-error: true
+
+      - name: 🧹 Cleanup keychain
+        if: always()
+        run: |
+          security delete-keychain \
+            "$RUNNER_TEMP/app-signing.keychain-db" 2>/dev/null || true
+          rm -f "$RUNNER_TEMP/certificate.p12"
+          rm -f "$RUNNER_TEMP/profile.mobileprovision"
+          echo "✅ Cleaned"
+
+  release_ios:
+    name: 🎉 iOS GitHub Release
+    needs: build_ios
+    runs-on: macos-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🐦 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: 📦 Get dependencies
+        run: flutter pub get
+
+      - name: 🔐 Import signing certificate
+        env:
+          IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          CERT_PATH=$RUNNER_TEMP/certificate.p12
+          echo -n "$IOS_CERTIFICATE_BASE64" | base64 --decode -o "$CERT_PATH"
+          security import "$CERT_PATH" \
+            -P "$IOS_CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+        continue-on-error: true
+
+      - name: 📋 Install provisioning profile
+        env:
+          IOS_PROVISION_PROFILE_BASE64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
+        run: |
+          PP_PATH=$RUNNER_TEMP/profile.mobileprovision
+          echo -n "$IOS_PROVISION_PROFILE_BASE64" | base64 --decode -o "$PP_PATH"
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp "$PP_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/
+        continue-on-error: true
+
+      - name: 🍫 Install CocoaPods
+        run: cd ios && pod install --repo-update
+        continue-on-error: true
+
+      - name: 🚀 Build Release IPA
+        run: |
+          flutter build ipa --release \
+            --build-name=${{ github.ref_name }} \
+            --build-number=${{ github.run_number }} \
+            --export-options-plist=ios/ExportOptions.plist
+        continue-on-error: true
+
+      - name: 📂 Prepare release files
+        run: |
+          mkdir -p release_files
+          if ls build/ios/ipa/*.ipa 2>/dev/null; then
+            cp build/ios/ipa/*.ipa \
+               "release_files/${{ env.APP_NAME }}-${{ github.ref_name }}-ios.ipa"
+          else
+            echo "iOS IPA requires Apple Developer signing." \
+              > release_files/iOS_SIGNING_REQUIRED.txt
+          fi
+
+      - name: 🎉 Create iOS GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "🚩 RedFlag Names ${{ github.ref_name }} — iOS"
+          body: |
+            ## 🚩 RedFlag Names ${{ github.ref_name }} — iOS
+            > Made by **chAs Tech Group**
+
+            | File | Use |
+            |---|---|
+            | `*-ios.ipa` | TestFlight / AltStore / Xcode |
+
+            *Made with ❤️ by chAs Tech Group*
+          draft: false
+          prerelease: false
+          files: release_files/*
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🧹 Cleanup
+        if: always()
+        run: |
+          security delete-keychain \
+            "$RUNNER_TEMP/app-signing.keychain-db" 2>/dev/null || true
+          rm -f "$RUNNER_TEMP/certificate.p12"
+          rm -f "$RUNNER_TEMP/profile.mobileprovision"
