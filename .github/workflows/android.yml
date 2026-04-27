@@ -1,0 +1,205 @@
+name: 🤖 Android — Build & Release
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags: [ 'v*.*.*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: '3.24.5'
+  JAVA_VERSION: '17'
+  APP_NAME: 'RedFlagNames'
+
+jobs:
+  build:
+    name: 🔨 Build APK + AAB
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: 🐦 Setup Flutter ${{ env.FLUTTER_VERSION }}
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: 📦 Get dependencies
+        run: flutter pub get
+
+      - name: 🔍 Analyze code
+        run: flutter analyze --no-fatal-infos
+        continue-on-error: true
+
+      - name: 🧪 Run tests
+        run: flutter test
+        continue-on-error: true
+
+      - name: 🔐 Decode keystore
+        run: |
+          echo "${{ secrets.KEY_JKS }}" | base64 --decode \
+            > android/app/redflag_names.jks
+          echo "✅ Keystore decoded"
+
+      - name: 🔑 Write key.properties
+        run: |
+          cat > android/key.properties << EOF
+          storePassword=${{ secrets.STORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=redflag_names.jks
+          EOF
+          echo "✅ key.properties written"
+
+      - name: 🏗️ Build Debug APK
+        run: |
+          flutter build apk --debug \
+            --build-name=1.0.${{ github.run_number }} \
+            --build-number=${{ github.run_number }}
+
+      - name: 🚀 Build Release APK
+        run: |
+          flutter build apk --release \
+            --build-name=1.0.${{ github.run_number }} \
+            --build-number=${{ github.run_number }}
+
+      - name: 📦 Build Release AAB
+        run: |
+          flutter build appbundle --release \
+            --build-name=1.0.${{ github.run_number }} \
+            --build-number=${{ github.run_number }}
+
+      - name: 📂 Collect artifacts
+        run: |
+          mkdir -p artifacts
+          cp build/app/outputs/flutter-apk/app-debug.apk \
+             "artifacts/${{ env.APP_NAME }}-debug-${{ github.run_number }}.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk \
+             "artifacts/${{ env.APP_NAME }}-release-${{ github.run_number }}.apk"
+          cp build/app/outputs/bundle/release/app-release.aab \
+             "artifacts/${{ env.APP_NAME }}-release-${{ github.run_number }}.aab"
+          ls -lh artifacts/
+
+      - name: 📤 Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-apk-${{ github.run_number }}
+          path: artifacts/${{ env.APP_NAME }}-debug-*.apk
+          retention-days: 14
+
+      - name: 📤 Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-apk-${{ github.run_number }}
+          path: artifacts/${{ env.APP_NAME }}-release-*.apk
+          retention-days: 60
+
+      - name: 📤 Upload Release AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-aab-${{ github.run_number }}
+          path: artifacts/${{ env.APP_NAME }}-release-*.aab
+          retention-days: 60
+
+      - name: 🧹 Cleanup secrets
+        if: always()
+        run: |
+          rm -f android/app/redflag_names.jks
+          rm -f android/key.properties
+          echo "✅ Secrets cleaned"
+
+  release:
+    name: 🎉 GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: 🐦 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: 📦 Get dependencies
+        run: flutter pub get
+
+      - name: 🔐 Decode keystore
+        run: |
+          echo "${{ secrets.KEY_JKS }}" | base64 --decode \
+            > android/app/redflag_names.jks
+
+      - name: 🔑 Write key.properties
+        run: |
+          cat > android/key.properties << EOF
+          storePassword=${{ secrets.STORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=redflag_names.jks
+          EOF
+
+      - name: 🚀 Build Release APK
+        run: |
+          flutter build apk --release \
+            --build-name=${{ github.ref_name }} \
+            --build-number=${{ github.run_number }}
+
+      - name: 📦 Build Release AAB
+        run: |
+          flutter build appbundle --release \
+            --build-name=${{ github.ref_name }} \
+            --build-number=${{ github.run_number }}
+
+      - name: 🧹 Cleanup secrets
+        if: always()
+        run: |
+          rm -f android/app/redflag_names.jks
+          rm -f android/key.properties
+
+      - name: 📂 Collect release files
+        run: |
+          mkdir -p release_files
+          cp build/app/outputs/flutter-apk/app-release.apk \
+             "release_files/${{ env.APP_NAME }}-${{ github.ref_name }}-android.apk"
+          cp build/app/outputs/bundle/release/app-release.aab \
+             "release_files/${{ env.APP_NAME }}-${{ github.ref_name }}-playstore.aab"
+
+      - name: 🎉 Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "🚩 RedFlag Names ${{ github.ref_name }} — Android"
+          body: |
+            ## 🚩 RedFlag Names ${{ github.ref_name }}
+            > Made by **chAs Tech Group**
+
+            | File | Use |
+            |---|---|
+            | `*-android.apk` | Direct install / sideload |
+            | `*-playstore.aab` | Upload to Google Play Store |
+
+            *Made with ❤️ by chAs Tech Group*
+          draft: false
+          prerelease: false
+          files: release_files/*
+          token: ${{ secrets.GITHUB_TOKEN }}
