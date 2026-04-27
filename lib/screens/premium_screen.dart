@@ -341,7 +341,7 @@ class _PremiumScreenState extends State<PremiumScreen>
           style: GoogleFonts.poppins(
               fontSize: 13,
               fontWeight: FontWeight.w400,
-              color: Colors.white50),
+              color: Colors.white54),
         ),
         Text(
           'As',
