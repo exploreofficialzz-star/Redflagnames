@@ -12,42 +12,29 @@ class NameAnalyzerService {
   final _random = Random();
   final _uuid = const Uuid();
 
-  // ===== PUBLIC: ANALYZE =====
   AnalysisResult analyze(String name, GenderContext context) {
-    final clean = name.trim();
+    final clean       = name.trim();
     final capitalized = _capitalize(clean);
-    final seed = _nameSeed(clean);
-
-    final intro    = _pickIntro(capitalized, seed);
-    final traits   = _pickTraits(context, seed, capitalized);
-    final twist    = _pick(ContentPools.twists, seed + 999);
-    final score    = _calculateChaos(clean, seed);
-    final level    = _chaosLevel(score);
-    final ending   = _riskEnding(level);
-    final disc     = _pickDisclaimer(capitalized, seed);
-    final flag     = _pickFlag(level);
+    final seed        = _nameSeed(clean);
 
     final result = AnalysisResult(
       id: _uuid.v4(),
       name: capitalized,
       genderContext: context,
-      intro: intro,
-      traits: traits,
-      twist: twist,
-      ending: ending,
-      chaosLevel: level,
-      chaosScore: score,
-      disclaimer: disc,
-      flagEmoji: flag,
+      intro: _pickIntro(capitalized, seed),
+      traits: _pickTraits(context, seed, capitalized),
+      twist: _pick(ContentPools.twists, seed + 999),
+      ending: _riskEnding(_chaosLevel(_calculateChaos(clean, seed))),
+      chaosLevel: _chaosLevel(_calculateChaos(clean, seed)),
+      chaosScore: _calculateChaos(clean, seed),
+      disclaimer: _pickDisclaimer(capitalized, seed),
+      flagEmoji: _pickFlag(_chaosLevel(_calculateChaos(clean, seed))),
       analyzedAt: DateTime.now(),
     );
 
-    // Save in background — never await, never throw
     _saveToHistory(result);
     return result;
   }
-
-  // ===== PRIVATE HELPERS =====
 
   String _capitalize(String name) {
     if (name.isEmpty) return name;
@@ -64,57 +51,57 @@ class NameAnalyzerService {
 
   String _pick(List<String> pool, int seed) {
     if (pool.isEmpty) return '';
-    final index = (_random.nextInt(pool.length) + seed) % pool.length;
-    return pool[index];
+    return pool[(_random.nextInt(pool.length) + seed) % pool.length];
   }
 
-  String _pickIntro(String name, int seed) {
-    return _pick(ContentPools.intros, seed)
-        .replaceAll('{name}', name);
-  }
+  String _pickIntro(String name, int seed) =>
+      _pick(ContentPools.intros, seed).replaceAll('{name}', name);
 
   List<String> _pickTraits(GenderContext context, int seed, String name) {
     final traits = <String>[];
 
-    // Special name overrides
-    final special =
-        ContentPools.specialNames[name.toLowerCase()];
+    // 1) Special name (up to 2)
+    final special = ContentPools.specialNames[name.toLowerCase()];
     if (special != null && special.isNotEmpty) {
-      traits.addAll(special.take(2));
+      traits.addAll((List<String>.from(special)..shuffle(Random(seed))).take(2));
     }
 
-    // General traits
-    final general = List<String>.from(ContentPools.generalTraits)
-      ..shuffle(Random(seed));
-    traits.addAll(general.take((3 - traits.length).clamp(0, 3)));
-
-    // Context traits
-    final List<String> ctxPool;
-    switch (context) {
-      case GenderContext.boyfriend:
-        ctxPool = ContentPools.boyfriendTraits;
-        break;
-      case GenderContext.girlfriend:
-        ctxPool = ContentPools.girlfriendTraits;
-        break;
-      case GenderContext.crush:
-        ctxPool = ContentPools.crushTraits;
-        break;
-      case GenderContext.ex:
-        ctxPool = ContentPools.exTraits;
-        break;
-      case GenderContext.general:
-        ctxPool = ContentPools.generalTraits;
-        break;
-    }
-
+    // 2) Context-specific (2)
+    final ctxPool = _contextPool(context);
     if (ctxPool.isNotEmpty) {
-      final shuffled = List<String>.from(ctxPool)..shuffle(Random(seed + 42));
-      traits.addAll(shuffled.take(2));
+      traits.addAll(
+          (List<String>.from(ctxPool)..shuffle(Random(seed + 42))).take(2));
     }
 
-    traits.shuffle(Random(seed + 7));
-    return traits.take(5).toList();
+    // 3) General (2)
+    traits.addAll(
+        (List<String>.from(ContentPools.generalTraits)..shuffle(Random(seed + 1)))
+            .take(2));
+
+    // 4) One spicy category
+    final spicy = [
+      ContentPools.lyingTraits,
+      ContentPools.cheatingTraits,
+      ContentPools.appearanceTraits,
+      ContentPools.soloHabitTraits,
+      ContentPools.intimateTraits,
+    ][seed % 5];
+    if (spicy.isNotEmpty) {
+      traits.addAll(
+          (List<String>.from(spicy)..shuffle(Random(seed + 99))).take(1));
+    }
+
+    return (traits.toSet().toList()..shuffle(Random(seed + 7))).take(6).toList();
+  }
+
+  List<String> _contextPool(GenderContext context) {
+    switch (context) {
+      case GenderContext.boyfriend: return ContentPools.boyfriendTraits;
+      case GenderContext.girlfriend: return ContentPools.girlfriendTraits;
+      case GenderContext.crush: return ContentPools.crushTraits;
+      case GenderContext.ex: return ContentPools.exTraits;
+      case GenderContext.general: return ContentPools.generalTraits;
+    }
   }
 
   int _calculateChaos(String name, int seed) {
@@ -134,21 +121,15 @@ class NameAnalyzerService {
 
   String _riskEnding(ChaosLevel level) {
     switch (level) {
-      case ChaosLevel.low:
-        return ContentPools.riskEndings['low']!;
-      case ChaosLevel.medium:
-        return ContentPools.riskEndings['medium']!;
-      case ChaosLevel.high:
-        return ContentPools.riskEndings['high']!;
-      case ChaosLevel.extreme:
-        return ContentPools.riskEndings['extreme']!;
+      case ChaosLevel.low:     return ContentPools.riskEndings['low']!;
+      case ChaosLevel.medium:  return ContentPools.riskEndings['medium']!;
+      case ChaosLevel.high:    return ContentPools.riskEndings['high']!;
+      case ChaosLevel.extreme: return ContentPools.riskEndings['extreme']!;
     }
   }
 
-  String _pickDisclaimer(String name, int seed) {
-    return _pick(ContentPools.disclaimers, seed + 456)
-        .replaceAll('{name}', name);
-  }
+  String _pickDisclaimer(String name, int seed) =>
+      _pick(ContentPools.disclaimers, seed + 456).replaceAll('{name}', name);
 
   String _pickFlag(ChaosLevel level) {
     switch (level) {
@@ -159,9 +140,6 @@ class NameAnalyzerService {
     }
   }
 
-  // ===== HISTORY =====
-
-  /// Fire-and-forget — runs in background, never throws
   void _saveToHistory(AnalysisResult result) {
     SharedPreferences.getInstance().then((prefs) {
       final history = prefs.getStringList('history') ?? [];
@@ -174,19 +152,13 @@ class NameAnalyzerService {
   Future<List<AnalysisResult>> getHistory() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final history = prefs.getStringList('history') ?? [];
-      final results = <AnalysisResult>[];
-      for (final s in history) {
-        try {
-          results.add(AnalysisResult.fromJsonString(s));
-        } catch (_) {
-          // Skip corrupted entries
-        }
-      }
-      return results;
-    } catch (_) {
-      return [];
-    }
+      return (prefs.getStringList('history') ?? [])
+          .map((s) {
+            try { return AnalysisResult.fromJsonString(s); } catch (_) { return null; }
+          })
+          .whereType<AnalysisResult>()
+          .toList();
+    } catch (_) { return []; }
   }
 
   Future<void> clearHistory() async {
