@@ -41,16 +41,13 @@ class _SplashScreenState extends State<SplashScreen>
           gradient: RadialGradient(
             center: Alignment.center,
             radius: 1.3,
-            colors: [
-              Color(0xFF2D0A1E),
-              Color(0xFF0D0D1A),
-            ],
+            colors: [Color(0xFF2D0A1E), Color(0xFF0D0D1A)],
           ),
         ),
         child: Stack(
           children: [
-            // ── Background sparkle particles ──
-            ..._buildParticles(),
+            // ── Floating emoji particles ──
+            _buildParticles(context),
 
             // ── Main content ──
             Center(
@@ -59,11 +56,10 @@ class _SplashScreenState extends State<SplashScreen>
                 children: [
                   const Spacer(flex: 2),
 
-                  // ── App Icon with glow ──
+                  // ── Icon with glow ──
                   Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Outer glow
                       AnimatedBuilder(
                         animation: _pulseController,
                         builder: (_, __) => Container(
@@ -73,8 +69,8 @@ class _SplashScreenState extends State<SplashScreen>
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFFF3B5C)
-                                    .withOpacity(0.25 * _pulseController.value),
+                                color: const Color(0xFFFF3B5C).withOpacity(
+                                    0.25 * _pulseController.value),
                                 blurRadius: 60,
                                 spreadRadius: 20,
                               ),
@@ -82,7 +78,6 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                         ),
                       ),
-                      // Icon
                       ClipRRect(
                         borderRadius: BorderRadius.circular(32),
                         child: Image.asset(
@@ -95,14 +90,18 @@ class _SplashScreenState extends State<SplashScreen>
                             height: 130,
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [Color(0xFFFF3B5C), Color(0xFFFF6B9D)],
+                                colors: [
+                                  Color(0xFFFF3B5C),
+                                  Color(0xFFFF6B9D)
+                                ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
                               borderRadius: BorderRadius.circular(32),
                             ),
                             child: const Center(
-                              child: Text('🚩', style: TextStyle(fontSize: 64)),
+                              child: Text('🚩',
+                                  style: TextStyle(fontSize: 64)),
                             ),
                           ),
                         ),
@@ -120,7 +119,7 @@ class _SplashScreenState extends State<SplashScreen>
 
                   const SizedBox(height: 36),
 
-                  // ── App Name ──
+                  // ── RedFlag title ──
                   ShaderMask(
                     shaderCallback: (bounds) => const LinearGradient(
                       colors: [Colors.white, Color(0xFFFF6B9D)],
@@ -191,7 +190,8 @@ class _SplashScreenState extends State<SplashScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(3, (i) {
                       return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 5),
+                        margin:
+                            const EdgeInsets.symmetric(horizontal: 5),
                         width: 9,
                         height: 9,
                         decoration: const BoxDecoration(
@@ -210,7 +210,10 @@ class _SplashScreenState extends State<SplashScreen>
                             curve: Curves.easeInOut,
                           )
                           .then()
-                          .scaleXY(begin: 1.0, end: 0.4, duration: 600.ms);
+                          .scaleXY(
+                              begin: 1.0,
+                              end: 0.4,
+                              duration: 600.ms);
                     }),
                   ).animate().fadeIn(delay: 1000.ms),
 
@@ -226,7 +229,7 @@ class _SplashScreenState extends State<SplashScreen>
 
                   const SizedBox(height: 40),
 
-                  // ── by chAs ──
+                  // ── by chAs Tech Group ──
                   _buildChAsTag()
                       .animate()
                       .fadeIn(delay: 1600.ms, duration: 800.ms)
@@ -242,7 +245,7 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
-  // ── chAs Tech Group branding tag ──
+  // ── by chAs Tech Group tag ──────────────────────
   Widget _buildChAsTag() {
     return Column(
       children: [
@@ -250,10 +253,9 @@ class _SplashScreenState extends State<SplashScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 40,
-              height: 1,
-              color: Colors.white.withOpacity(0.15),
-            ),
+                width: 40,
+                height: 1,
+                color: Colors.white.withOpacity(0.15)),
             const SizedBox(width: 12),
             Text(
               'by',
@@ -265,22 +267,20 @@ class _SplashScreenState extends State<SplashScreen>
             ),
             const SizedBox(width: 12),
             Container(
-              width: 40,
-              height: 1,
-              color: Colors.white.withOpacity(0.15),
-            ),
+                width: 40,
+                height: 1,
+                color: Colors.white.withOpacity(0.15)),
           ],
         ),
-        const SizedBox(height: 8),
-        // chAs logo pill
+        const SizedBox(height: 10),
         Container(
           padding:
-              const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
+              const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                const Color(0xFFFFB830).withOpacity(0.15),
-                const Color(0xFFFF3B5C).withOpacity(0.10),
+                const Color(0xFFFFB830).withOpacity(0.12),
+                const Color(0xFFFF3B5C).withOpacity(0.08),
               ],
             ),
             borderRadius: BorderRadius.circular(20),
@@ -291,7 +291,7 @@ class _SplashScreenState extends State<SplashScreen>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // chAs logo circle
+              // Logo circle
               Container(
                 width: 22,
                 height: 22,
@@ -352,8 +352,10 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
-  // ── Background floating emoji particles ──
-  List<Widget> _buildParticles() {
+  // ── Floating particles — FIXED: uses MediaQuery not deprecated window ──
+  Widget _buildParticles(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     final particles = [
       {'emoji': '🚩', 'x': 0.08, 'y': 0.10, 'size': 22.0},
       {'emoji': '💀', 'x': 0.88, 'y': 0.08, 'size': 20.0},
@@ -366,30 +368,29 @@ class _SplashScreenState extends State<SplashScreen>
       {'emoji': '👀', 'x': 0.20, 'y': 0.92, 'size': 16.0},
     ];
 
-    final size = WidgetsBinding.instance.window.physicalSize /
-        WidgetsBinding.instance.window.devicePixelRatio;
-
-    return particles.asMap().entries.map((entry) {
-      final p = entry.value;
-      final i = entry.key;
-      return Positioned(
-        left: size.width * (p['x'] as double),
-        top: size.height * (p['y'] as double),
-        child: Text(
-          p['emoji'] as String,
-          style: TextStyle(fontSize: p['size'] as double),
-        )
-            .animate(
-              onPlay: (c) => c.repeat(reverse: true),
-              delay: Duration(milliseconds: i * 200),
-            )
-            .moveY(
-              begin: 0,
-              end: -12,
-              duration: Duration(milliseconds: 2200 + (i * 250)),
-              curve: Curves.easeInOut,
-            ),
-      );
-    }).toList();
+    return Stack(
+      children: particles.asMap().entries.map((entry) {
+        final p = entry.value;
+        final i = entry.key;
+        return Positioned(
+          left: size.width * (p['x'] as double),
+          top: size.height * (p['y'] as double),
+          child: Text(
+            p['emoji'] as String,
+            style: TextStyle(fontSize: p['size'] as double),
+          )
+              .animate(
+                onPlay: (c) => c.repeat(reverse: true),
+                delay: Duration(milliseconds: i * 200),
+              )
+              .moveY(
+                begin: 0,
+                end: -12,
+                duration: Duration(milliseconds: 2200 + (i * 250)),
+                curve: Curves.easeInOut,
+              ),
+        );
+      }).toList(),
+    );
   }
 }
