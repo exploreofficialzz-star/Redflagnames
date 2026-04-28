@@ -43,7 +43,12 @@ jobs:
         continue-on-error: true
 
       - name: 🧪 Run tests
-        run: flutter test
+        run: |
+          if [ -d "test" ]; then
+            flutter test
+          else
+            echo "No test directory found — skipping tests"
+          fi
         continue-on-error: true
 
       - name: 🔐 Decode keystore
@@ -60,7 +65,6 @@ jobs:
           keyAlias=${{ secrets.KEY_ALIAS }}
           storeFile=redflag_names.jks
           EOF
-          echo "✅ key.properties written"
 
       - name: 🏗️ Build Debug APK
         run: |
@@ -117,7 +121,6 @@ jobs:
         run: |
           rm -f android/app/redflag_names.jks
           rm -f android/key.properties
-          echo "✅ Secrets cleaned"
 
   release:
     name: 🎉 GitHub Release
