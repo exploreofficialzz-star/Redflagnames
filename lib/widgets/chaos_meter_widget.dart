@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../models/analysis_result.dart';
@@ -27,7 +26,9 @@ class _ChaosMeterWidgetState extends State<ChaosMeterWidget>
     _progressAnimation = Tween<double>(
       begin: 0,
       end: widget.result.chaosScore / 100.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+    );
 
     Future.delayed(const Duration(milliseconds: 400), () {
       if (mounted) _controller.forward();
@@ -47,23 +48,31 @@ class _ChaosMeterWidgetState extends State<ChaosMeterWidget>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Header row
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              '📊 Chaos Meter',
-              style: GoogleFonts.poppins(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-              ),
+            Row(
+              children: [
+                const Text('📊', style: TextStyle(fontSize: 16)),
+                const SizedBox(width: 8),
+                Text(
+                  'Chaos Meter',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white70,
+                  ),
+                ),
+              ],
             ),
+            // Animated score
             AnimatedBuilder(
               animation: _progressAnimation,
               builder: (_, __) => Text(
                 '${(_progressAnimation.value * 100).toInt()}%',
                 style: GoogleFonts.poppins(
-                  fontSize: 20,
+                  fontSize: 22,
                   fontWeight: FontWeight.w900,
                   color: _meterColor,
                 ),
@@ -71,24 +80,26 @@ class _ChaosMeterWidgetState extends State<ChaosMeterWidget>
             ),
           ],
         ),
-        const SizedBox(height: 16),
+
+        const SizedBox(height: 14),
+
         // Progress bar
         ClipRRect(
           borderRadius: BorderRadius.circular(100),
           child: AnimatedBuilder(
             animation: _progressAnimation,
-            builder: (_, __) {
-              return LinearProgressIndicator(
-                value: _progressAnimation.value,
-                minHeight: 18,
-                backgroundColor: Colors.white.withOpacity(0.08),
-                valueColor: AlwaysStoppedAnimation<Color>(_meterColor),
-              );
-            },
+            builder: (_, __) => LinearProgressIndicator(
+              value: _progressAnimation.value,
+              minHeight: 16,
+              backgroundColor: Colors.white.withOpacity(0.08),
+              valueColor: AlwaysStoppedAnimation<Color>(_meterColor),
+            ),
           ),
         ),
-        const SizedBox(height: 14),
-        // Labels
+
+        const SizedBox(height: 10),
+
+        // Scale labels
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -98,11 +109,14 @@ class _ChaosMeterWidgetState extends State<ChaosMeterWidget>
             _label('🚨 RUN', const Color(0xFFFF1744)),
           ],
         ),
+
         const SizedBox(height: 14),
-        // Verdict
+
+        // Verdict chip
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+          padding:
+              const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
           decoration: BoxDecoration(
             color: _meterColor.withOpacity(0.12),
             borderRadius: BorderRadius.circular(12),
