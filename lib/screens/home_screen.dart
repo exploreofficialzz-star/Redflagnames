@@ -26,12 +26,20 @@ class _HomeScreenState extends State<HomeScreen>
   bool _bannerLoaded = false;
 
   final List<Map<String, dynamic>> _emojis = [
-    {'emoji': '🚩', 'x': 0.1, 'y': 0.15},
-    {'emoji': '💀', 'x': 0.85, 'y': 0.12},
-    {'emoji': '😂', 'x': 0.05, 'y': 0.45},
-    {'emoji': '💅', 'x': 0.9, 'y': 0.38},
-    {'emoji': '😏', 'x': 0.15, 'y': 0.72},
-    {'emoji': '🔴', 'x': 0.82, 'y': 0.68},
+    {'emoji': '🚩', 'x': 0.08, 'y': 0.12},
+    {'emoji': '💀', 'x': 0.86, 'y': 0.10},
+    {'emoji': '😂', 'x': 0.04, 'y': 0.44},
+    {'emoji': '💅', 'x': 0.90, 'y': 0.36},
+    {'emoji': '😏', 'x': 0.12, 'y': 0.74},
+    {'emoji': '🔴', 'x': 0.84, 'y': 0.70},
+  ];
+
+  static const _contexts = [
+    {'value': GenderContext.general,    'label': '👤 General'},
+    {'value': GenderContext.boyfriend,  'label': '💙 Boyfriend'},
+    {'value': GenderContext.girlfriend, 'label': '💕 Girlfriend'},
+    {'value': GenderContext.crush,      'label': '😍 Crush'},
+    {'value': GenderContext.ex,         'label': '💔 Ex'},
   ];
 
   @override
@@ -42,7 +50,6 @@ class _HomeScreenState extends State<HomeScreen>
       duration: const Duration(milliseconds: 600),
     );
     _loadBanner();
-    // Fire-and-forget — do NOT await here to avoid blocking UI
     SoundService.instance.initialize().catchError((_) {});
   }
 
@@ -63,15 +70,9 @@ class _HomeScreenState extends State<HomeScreen>
     super.dispose();
   }
 
-  static const _contexts = [
-    {'value': GenderContext.general, 'label': '👤 General'},
-    {'value': GenderContext.boyfriend, 'label': '💙 Boyfriend'},
-    {'value': GenderContext.girlfriend, 'label': '💕 Girlfriend'},
-    {'value': GenderContext.crush, 'label': '😍 Crush'},
-    {'value': GenderContext.ex, 'label': '💔 Ex'},
-  ];
-
-  // ===== CORE FIX: try/finally ensures _isAnalyzing always resets =====
+  // ═══════════════════════════════════════════════
+  //  ANALYZE — Ad shown BEFORE result navigates
+  // ═══════════════════════════════════════════════
   Future<void> _analyze() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
@@ -82,21 +83,16 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() => _isAnalyzing = true);
 
     try {
-      // Play woosh sound — wrapped so it never blocks
-      try {
-        await SoundService.instance.playAnalyzing();
-      } catch (_) {}
+      // Play woosh sound
+      try { await SoundService.instance.playAnalyzing(); } catch (_) {}
 
-      // Dramatic scanning delay
-      await Future.delayed(const Duration(milliseconds: 1800));
+      // Scanning delay for drama
+      await Future.delayed(const Duration(milliseconds: 1600));
 
       // Generate result
-      final result = NameAnalyzerService.instance.analyze(
-        name,
-        _selectedContext,
-      );
+      final result = NameAnalyzerService.instance.analyze(name, _selectedContext);
 
-      // Play result sound — wrapped so it never blocks
+      // Play result sound
       try {
         switch (result.chaosLevel) {
           case ChaosLevel.low:
@@ -111,44 +107,47 @@ class _HomeScreenState extends State<HomeScreen>
         }
       } catch (_) {}
 
-      // Show notification — wrapped, permission may be denied
+      if (!mounted) return;
+
+      // 🔥 SHOW INTERSTITIAL AD *BEFORE* NAVIGATING TO RESULT
+      // User has to watch the ad before seeing the result
       try {
-        await NotificationService.instance
-            .showResultNotification(name, result.chaosLevelText);
+        await AdService.instance.showInterstitial(context);
       } catch (_) {}
 
       if (!mounted) return;
 
-      // Navigate to result screen
+      // Show notification in background
+      try {
+        NotificationService.instance
+            .showResultNotification(name, result.chaosLevelText);
+      } catch (_) {}
+
+      // Now navigate to result
       await Navigator.of(context).pushNamed('/result', arguments: result);
 
-      // Show interstitial AFTER returning from result — wrapped
-      if (mounted) {
-        try {
-          await AdService.instance.showInterstitial(context);
-        } catch (_) {}
-      }
     } catch (e) {
-      debugPrint('❌ Analyze error: $e');
-      // Show a snackbar so user knows something went wrong
+      debugPrint('Analyze error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Something went wrong — please try again 😅'),
+            content: const Text('Something went wrong — try again 😅'),
             backgroundColor: const Color(0xFFFF3B5C),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+                borderRadius: BorderRadius.circular(12)),
           ),
         );
       }
     } finally {
-      // ALWAYS reset loading state — this is the critical fix
+      // ALWAYS reset loading — critical fix
       if (mounted) setState(() => _isAnalyzing = false);
     }
   }
 
+  // ═══════════════════════════════════════════════
+  //  BUILD
+  // ═══════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -169,11 +168,11 @@ class _HomeScreenState extends State<HomeScreen>
                         children: [
                           const SizedBox(height: 16),
                           _buildHeader(),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 28),
                           _buildNameInput(),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 20),
                           _buildContextSelector(),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 28),
                           _buildAnalyzeButton(),
                           const SizedBox(height: 20),
                           _buildQuickStats(),
@@ -183,13 +182,11 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                   ),
                 ),
+                // 🔥 BANNER AD — always visible at bottom
                 if (_bannerLoaded &&
                     _bannerAd != null &&
                     !AdService.instance.isPremium)
-                  SizedBox(
-                    height: 60,
-                    child: AdWidget(ad: _bannerAd!),
-                  ),
+                  SizedBox(height: 60, child: AdWidget(ad: _bannerAd!)),
               ],
             ),
           ),
@@ -204,11 +201,7 @@ class _HomeScreenState extends State<HomeScreen>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF1A0D2E),
-            Color(0xFF0D0D1A),
-            Color(0xFF1A0A12),
-          ],
+          colors: [Color(0xFF1A0D2E), Color(0xFF0D0D1A), Color(0xFF1A0A12)],
         ),
       ),
     );
@@ -222,14 +215,12 @@ class _HomeScreenState extends State<HomeScreen>
       return Positioned(
         left: size.width * (e['x'] as double),
         top: size.height * (e['y'] as double),
-        child: Text(
-          e['emoji'] as String,
-          style: const TextStyle(fontSize: 28),
-        )
+        child: Text(e['emoji'] as String,
+                style: const TextStyle(fontSize: 26))
             .animate(onPlay: (c) => c.repeat(reverse: true))
             .moveY(
               begin: 0,
-              end: -15,
+              end: -14,
               duration: Duration(milliseconds: 2000 + (i * 300)),
               curve: Curves.easeInOut,
             ),
@@ -261,8 +252,7 @@ class _HomeScreenState extends State<HomeScreen>
                     ],
                   ),
                   child: const Center(
-                    child: Text('🚩', style: TextStyle(fontSize: 20)),
-                  ),
+                      child: Text('🚩', style: TextStyle(fontSize: 20))),
                 ),
                 const SizedBox(width: 10),
                 Text(
@@ -279,8 +269,7 @@ class _HomeScreenState extends State<HomeScreen>
               children: [
                 _iconBtn(
                   icon: Icons.history_rounded,
-                  onTap: () =>
-                      Navigator.of(context).pushNamed('/history'),
+                  onTap: () => Navigator.of(context).pushNamed('/history'),
                 ),
                 const SizedBox(width: 8),
                 _iconBtn(
@@ -312,7 +301,7 @@ class _HomeScreenState extends State<HomeScreen>
           'Purely for entertainment — no one is safe 🚩',
           textAlign: TextAlign.center,
           style: GoogleFonts.poppins(fontSize: 13, color: Colors.white54),
-        ).animate().fadeIn(delay: 300.ms, duration: 600.ms),
+        ).animate().fadeIn(delay: 300.ms),
       ],
     );
   }
@@ -362,7 +351,8 @@ class _HomeScreenState extends State<HomeScreen>
           onSubmitted: (_) => _analyze(),
           decoration: InputDecoration(
             hintText: 'Enter a name...',
-            hintStyle: GoogleFonts.poppins(fontSize: 18, color: Colors.white24),
+            hintStyle:
+                GoogleFonts.poppins(fontSize: 18, color: Colors.white24),
             filled: true,
             fillColor: const Color(0xFF1E1E35),
             border: OutlineInputBorder(
@@ -410,10 +400,8 @@ class _HomeScreenState extends State<HomeScreen>
               final isSelected =
                   _selectedContext == ctx['value'] as GenderContext;
               return GestureDetector(
-                onTap: () {
-                  setState(() =>
-                      _selectedContext = ctx['value'] as GenderContext);
-                },
+                onTap: () => setState(
+                    () => _selectedContext = ctx['value'] as GenderContext),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(
@@ -424,8 +412,7 @@ class _HomeScreenState extends State<HomeScreen>
                             colors: [Color(0xFFFF3B5C), Color(0xFFFF6B9D)],
                           )
                         : null,
-                    color:
-                        isSelected ? null : const Color(0xFF1E1E35),
+                    color: isSelected ? null : const Color(0xFF1E1E35),
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: isSelected
@@ -435,7 +422,8 @@ class _HomeScreenState extends State<HomeScreen>
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: const Color(0xFFFF3B5C).withOpacity(0.4),
+                              color:
+                                  const Color(0xFFFF3B5C).withOpacity(0.4),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             )
@@ -449,8 +437,7 @@ class _HomeScreenState extends State<HomeScreen>
                       fontWeight: isSelected
                           ? FontWeight.w700
                           : FontWeight.w500,
-                      color:
-                          isSelected ? Colors.white : Colors.white60,
+                      color: isSelected ? Colors.white : Colors.white60,
                     ),
                   ),
                 ),
@@ -463,73 +450,65 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildAnalyzeButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 64,
-      child: GestureDetector(
-        onTap: _isAnalyzing ? null : _analyze,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          decoration: BoxDecoration(
-            gradient: _isAnalyzing
-                ? const LinearGradient(
-                    colors: [Color(0xFF444), Color(0xFF333)],
-                  )
-                : const LinearGradient(
-                    colors: [Color(0xFFFF1744), Color(0xFFFF6B9D)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+    return GestureDetector(
+      onTap: _isAnalyzing ? null : _analyze,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: 64,
+        decoration: BoxDecoration(
+          gradient: _isAnalyzing
+              ? const LinearGradient(
+                  colors: [Color(0xFF444), Color(0xFF333)])
+              : const LinearGradient(
+                  colors: [Color(0xFFFF1744), Color(0xFFFF6B9D)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: _isAnalyzing
+              ? null
+              : [
+                  BoxShadow(
+                    color: const Color(0xFFFF3B5C).withOpacity(0.5),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
                   ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: _isAnalyzing
-                ? null
-                : [
-                    BoxShadow(
-                      color: const Color(0xFFFF3B5C).withOpacity(0.5),
-                      blurRadius: 20,
-                      offset: const Offset(0, 6),
+                ],
+        ),
+        child: Center(
+          child: _isAnalyzing
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2.5),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Scanning for flags...',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
                     ),
                   ],
-          ),
-          child: Center(
-            child: _isAnalyzing
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2.5,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Scanning for flags...',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  )
-                : Text(
-                    '🚩  Analyze This Name',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
+                )
+              : Text(
+                  '🚩  Analyze This Name',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
                   ),
-          ),
+                ),
         ),
       ),
     ).animate().fadeIn(delay: 600.ms).scale(
-          begin: const Offset(0.9, 0.9),
-          end: const Offset(1, 1),
-        );
+        begin: const Offset(0.9, 0.9), end: const Offset(1, 1));
   }
 
   Widget _buildQuickStats() {
@@ -543,11 +522,11 @@ class _HomeScreenState extends State<HomeScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _statItem('😂', '10M+', 'Analyses Done'),
+          _statItem('😂', '10M+', 'Analyzed'),
           _divider(),
-          _statItem('🚩', '98%', 'Accuracy*\n*satire'),
+          _statItem('🚩', '98%', 'Accuracy*'),
           _divider(),
-          _statItem('💀', '∞', 'Name Combos'),
+          _statItem('💀', '50+', 'Name Types'),
         ],
       ),
     ).animate().fadeIn(delay: 700.ms);
@@ -558,26 +537,18 @@ class _HomeScreenState extends State<HomeScreen>
       children: [
         Text(emoji, style: const TextStyle(fontSize: 22)),
         const SizedBox(height: 4),
-        Text(
-          value,
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-            color: Colors.white,
-          ),
-        ),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: GoogleFonts.poppins(fontSize: 11, color: Colors.white38),
-        ),
+        Text(value,
+            style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: Colors.white)),
+        Text(label,
+            style: GoogleFonts.poppins(
+                fontSize: 11, color: Colors.white38)),
       ],
     );
   }
 
   Widget _divider() => Container(
-        width: 1,
-        height: 50,
-        color: Colors.white.withOpacity(0.08),
-      );
+      width: 1, height: 50, color: Colors.white.withOpacity(0.08));
 }

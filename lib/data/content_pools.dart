@@ -1,6 +1,6 @@
 // ignore_for_file: prefer_single_quotes
-/// RedFlag Names — Content Engine v3
-/// Short. Punchy. Meme energy. Real talk.
+/// RedFlag Names — Content Engine v4
+/// Full Nigerian relationship vibes. Short. Punchy. Viral.
 
 class ContentPools {
 
@@ -8,8 +8,8 @@ class ContentPools {
   //  INTROS
   // ═══════════════════════════════════════════════
   static const List<String> intros = [
-    "Oh wow... a {name}? We have a lot to say 😂",
-    "You searched {name}? Say less. We got the full report 👀",
+    "Oh wow... a {name}? We have a LOT to say 😂",
+    "You searched {name}? Say less. Full report loading 👀",
     "{name} detected. Our condolences bestie 💀",
     "Ah yes. {name}. We know exactly what this is 😏",
     "Listen... we need to talk about {name} 😭",
@@ -20,86 +20,143 @@ class ContentPools {
     "We ran {name} through the scanner and baby... 👀",
     "FBI open up — {name} file has been declassified 🚔",
     "{name}? Oh we definitely know this type 😂💀",
-    "Relax. Breathe. We are about to expose {name} completely 🎭",
     "You already had a feeling about {name}. Here is the confirmation 🔍",
     "The {name} report is in and it is... something 😅",
+    "God have mercy. A {name} you say? Let us begin. 🙏😂",
   ];
 
   // ═══════════════════════════════════════════════
-  //  GENERAL TRAITS — Short punchy meme energy
+  //  GENERAL TRAITS
   // ═══════════════════════════════════════════════
   static const List<String> generalTraits = [
     "Always chasing one person after another, never settles 😂🚩",
     "Loyal only when they have no other options on the table 😭",
     "Has someone in every city and calls it friendship 💀",
-    "Will sweet-talk you in the morning and disappear by night 🌙",
+    "Sweet-talks you in the morning and disappears by night 🌙",
     "Their mouth says love but their actions say options 😤",
-    "Treats relationships like bus stops — always moving to the next one 🚌",
-    "Very loving at the beginning. Very ghost by month three 👻",
+    "Treats relationships like bus stops — always moving to the next 🚌",
+    "Very loving at the beginning. Ghost by month three. 👻",
     "Has backup options before the first one even ends 📱",
     "Phone always face down. Always. For no reason apparently 📵",
-    "Deletes messages but forgets to delete the notifications 😂",
-    "Their phone has more security than a bank vault 🔐",
     "Password changed. Story changed. Vibe changed. Nothing happened though 😒",
     "Sweet as sugar to your face. Different story behind your back 😇🚩",
     "God-fearing on Sunday. Devil from Monday to Saturday 😂",
     "Very spiritual in public. Very different in private 🙏😏",
     "Good person deep down. Very deep. Requires excavation. 😭",
-    "Means well honestly. Just means it from a safe distance 🌍",
-    "Big heart. Even bigger excuses. 😮",
-    "Simple and sweet when life is easy. Different person when it is not 😶",
+    "Means well. Just means it from a distance. 🌍",
     "Will read your message and wait 6 hours to reply for no reason 📱",
-    "Types three paragraphs and sends okay 😭",
     "Maximum effort when scared of losing you. Zero when they feel safe. 📉",
-    "Was doing the most when they wanted you. Doing the minimum now. 😮",
-    "The person they were early on should sue the person they became 😂",
-    "Charming enough to get what they want. Lazy enough after they get it. 💅",
+    "The person they were when chasing you should sue who they became 😂",
     "Says sorry but the behavior never changes. Same sorry, new situation. 🔁",
-    "Their apology always comes with a but at the end 😤",
-    "Acts like your partner in private. Keeps it ambiguous everywhere else. 👥",
+    "Acts like your partner in private. Ambiguous everywhere else. 👥",
     "Jealous enough to prove they care. Not committed enough to be serious. 😤",
-    "Wants the benefits of commitment without the label. Every time. 🏷️",
+    "Wants commitment benefits without the label. Every time. 🏷️",
   ];
 
   // ═══════════════════════════════════════════════
-  //  BOYFRIEND TRAITS
+  //  BOYFRIEND / MALE TRAITS
   // ═══════════════════════════════════════════════
   static const List<String> boyfriendTraits = [
-    "Small d*ck energy but very big confidence somehow 😂💀",
-    "Talks about himself more than he talks to you 🙃",
-    "Acts like cooking once a month is a personality trait 🍳",
-    "Fixes everything in the house except what is broken between you two 🔧",
+    // D energy
+    "Small d*ck but very big confidence. The audacity is inspiring. 😂💀",
+    "Big d*ck energy in the streets. Emotional child at home. 💀",
+    "Equipment size does not match the ego size. At all. 😂📏",
+    "The confidence he carries is not proportional to what he is working with 😂",
+    "Overcompensates everywhere for reasons the bedroom already explained 😂",
+
+    // Womanizer
+    "Classic womanizer. Has a type and you are not the only one of that type. 🚩",
+    "Has a woman in every contact. Calls them all bestie. 📱😭",
+    "Serial lover. Falls in love on Mondays. Falls out by Fridays. 🔄",
+    "Womanizer with a sweet mouth. Your downfall is how nice he sounds. 🍯💀",
+    "Can charm any woman into believing she is the only one. Spoiler: she is not. 😏",
+    "Has collected more hearts than a cardiologist and broken them all 💔",
+    "His DMs are a full-time social network. Yours is just one chat. 📱",
+
+    // Height
+    "Short king with the confidence of a 6-foot man and the attitude to match 😂👑",
+    "5 foot something but the ego is 7 feet tall 📏😂",
+    "Short but nobody told him that. He moves like he owns the room. 😂",
+    "Tall man energy but uses height as a personality trait. That is it. That is the personality. 📏",
+    "Very tall. Very unbothered. Very unavailable emotionally. 😶",
+
+    // Sugar boy / man
+    "Classic sugar boy. Will eat your money and call it love. 🍬💸",
+    "Sugar man energy — looking for someone to sponsor the lifestyle 💰😂",
+    "Lets women spend on him and calls it investment in the relationship. It is not. 😂",
+    "Has a whole roster of people funding his existence. Calls them all special. 💸",
+    "Chooses partners based on what they can provide. Feelings come later. If at all. 💰",
+
+    // Pride / quarrel
+    "No dey gree for anybody. Will die on every hill no matter how small. 😤🚩",
+    "Pride bigger than the relationship. Head too hard to say I was wrong. 💀",
+    "Will argue that the sky is green before he admits he made a mistake. 😂",
+    "Quarrel specialist. Can turn a hello into a full debate. 🗣️",
+    "Has never lost an argument in his mind. In reality, very different. 😂",
+    "Too proud to apologize. Too stubborn to change. Too confused why it is not working. 💀",
+    "No dey gree, no dey hear word, no dey change. The Holy Trinity of wahala. 😭",
+
+    // General male
+    "Will fix everything in the house except what is broken between you two 🔧",
     "Will go quiet for three days instead of just saying sorry 🤐",
     "His boys always know your business before you finish arguing 😤",
     "Very passionate physically. Completely missing emotionally. 💔",
-    "Thinks buying things replaces showing up. It does not. 🛍️",
-    "Never wrong. Not even once in recorded history. 👑",
-    "The energy he had when chasing you was his interview face 🎭",
-    "Has a work friend that texts at hours work does not require 📱",
-    "Short king with very tall audacity 😂📏",
     "Takes 47 minutes to reply to you but instant for everyone else 📵",
     "Very protective over his phone for a completely innocent man 🔐",
-    "Will tell you he loves you and never show it in the ways that matter 😶",
   ];
 
   // ═══════════════════════════════════════════════
-  //  GIRLFRIEND TRAITS
+  //  GIRLFRIEND / FEMALE TRAITS
   // ═══════════════════════════════════════════════
   static const List<String> girlfriendTraits = [
-    "Small chest big attitude. Do not underestimate. 😂💅",
-    "Big assets and even bigger energy — room knows when she walks in ✨",
-    "Short girl with the anger of a woman twice her size 👑😂",
-    "Tall, beautiful, and completely aware of both 📏💅",
+    // Chest
+    "Small breast but the confidence is enormous. She carries it well. 😂💅",
+    "Big breast and completely aware of the power this gives her. Uses it. ✨",
+    "The chest is the first thing anyone notices. She planned it that way. 😂",
+    "Small chest big attitude. Zero correlation but maximum energy. 💪",
+
+    // Nyash / Ass
+    "Big nyash, small patience. Do not test her. 👀😤",
+    "The nyash alone has caused three men to make poor life decisions. Not her fault. 😂🍑",
+    "Small nyash but she moves like she has the biggest in the room. Confidence is free. 😂💅",
+    "Has big nyash energy without the nyash. The energy is still valid. 😂",
+    "The back view alone should come with a warning label 😂🔥",
+
+    // Gold digger
+    "Classic gold digger with a cute smile. The smile is the trap. 💛😂",
+    "Loves you for your pockets first. Heart is a secondary concern. 💰",
+    "Will date you based on your bank statement not your personality. 💳",
+    "Has a minimum account balance requirement before emotions are considered 😂💸",
+    "When the money stops the feelings suddenly also stop. Suspicious timing. 💔💰",
+    "Dates up only. Has never been interested in potential. Only results. 📈",
+
+    // Pretender / virgin claims
+    "Has had more relationships than years alive but still tells people she is innocent 😂😇",
+    "Claims virgin. Her ex count has its own Wikipedia page. 😭",
+    "Thousand exes still claiming she has never done anything. The math is not mathing. 😂",
+    "Pretender of the highest order. Her public and private are two different Netflix shows. 🎭",
+    "Acts like an angel in public. Full drama at home. God-fearing on social media. 😇💀",
+    "The innocent girl act is Oscar-worthy. Supporting cast is her ex-boyfriend list. 😂🏆",
+    "Claims she does not do this and that. Her history says otherwise loudly. 😭",
+    "Born-again every Sunday. Fully returned to herself by Monday morning. 😂🙏",
+
+    // Height
+    "Short girl who will fight you and win emotionally every single time 👑",
+    "Small body, enormous wahala. Do not be fooled by the size. 😂",
+    "Tall girl with standards that match the height. Nothing wrong with that. 📏💅",
+    "Short queen with energy that fills every room she enters 👑😂",
+
+    // Pride / quarrel
+    "No dey gree for anybody. Even when she is wrong she argues better. 😤",
+    "Will quarrel you into submission. Has never backed down in recorded history. 💀",
+    "Pride level: will not apologize even when she knows she was wrong 😂",
+    "Stubborn like rain during harmattan. Unexpected and relentless. 😭",
+
+    // General female
     "Has a group chat about your relationship that knows more than you do 📱",
     "Will remember in June what you did wrong in January 📅",
-    "Says she is fine. She has not been fine since Tuesday. 😶",
     "Tests you without telling you there is a test 🎯",
-    "Her male bestie is suspiciously invested in the relationship 👀",
-    "Will heal from you in record time and post about it immediately 🌱📸",
-    "Tells her friends everything first. You find out last. 🗣️",
     "Forgives out loud. Holds it quietly for future reference. 🤫",
-    "Leaves clues she is unhappy then gets upset you missed them 🔍",
-    "Emotionally checked out before she ever says she is leaving 🚪",
     "Her healing era looks suspiciously like finding someone new 😂",
   ];
 
@@ -108,20 +165,20 @@ class ContentPools {
   // ═══════════════════════════════════════════════
   static const List<String> crushTraits = [
     "Responds to your stories immediately. Never starts the conversation. 👁️",
-    "Makes eye contact like a movie then acts like it did not happen ☀️",
+    "Makes eye contact like a movie scene then acts like it did not happen ☀️",
     "Gives you just enough to stay interested. Not enough to be sure. 🎯",
     "Hot one day. Unreadable the next. You are not imagining it. 🌡️",
-    "Texts and deletes more than they actually send 💬",
-    "Their friends know about you. They will not confirm it yet. 👥",
+    "Their body language says yes. Their words say just friends. 😭",
     "Flirts fully when comfortable. Retreats when it gets real. 🔉",
-    "The chemistry is loud. The communication is silent. 🧪",
-    "Finds excuses to be near you. Acts shocked every time. 🎲",
-    "Makes you feel chosen then shares that energy with three other people 😤",
+    "The chemistry is undeniable. The communication is zero. 🧪",
+    "Finds excuses to be near you then acts shocked every time. 🎲",
+    "Makes you feel chosen then shares that energy with three others. 😤",
     "Has feelings. Is absolutely terrified of those feelings. 💌",
     "Beautiful and confusing in exactly the ratio that damages your sleep 🌙",
-    "Body language says yes. Words say just friends. 😭",
     "Attractive enough to make you overlook every warning sign 🌹",
-    "You have had this feeling long enough it has its own anniversary 📅",
+    "Has sugar man or sugar girl energy but you are too deep in to see it 😂💰",
+    "They check every box on the outside. The inside is still being assembled. 📦",
+    "You have had this feeling long enough it deserves its own anniversary 📅",
   ];
 
   // ═══════════════════════════════════════════════
@@ -133,16 +190,16 @@ class ContentPools {
     "Moved on completely. Posts about it constantly. 📢",
     "Accidentally liked a photo from three years ago at 1am 💀",
     "The new person looks exactly like you. Coincidence they say. 👯",
-    "Told your secrets. That person told the world. 📣",
-    "Showed up glowing right after the breakup. Intentional. 💅",
+    "Showed up glowing right after the breakup. That was intentional. 💅",
     "Blocked everywhere. Somehow still knows everything about you. 🔍",
     "Left and acted surprised that you moved on. The audacity. 😤",
-    "Still has your hoodie. You both know. Nobody says anything. 👕",
-    "Said they needed space. Posted with someone new in that space. 🏠",
+    "Still has your hoodie. You both know. Nobody mentions it. 👕",
     "The love was real. The effort was not built to hold it. 💔",
-    "Their new relationship moving faster than yours ever did 📈",
-    "Introduced you to the family. Removed you like a footnote. 📝",
-    "You were the lesson they needed before the person they wanted 🍂",
+    "Had thousand reasons to stay and chose the one reason to leave 🍂",
+    "Claims to have changed. New person, same patterns, different victim. 🔄",
+    "Was a womanizer when you were together. Now suddenly settled. Interesting. 😂",
+    "Used your money, your time, your love. Left with the experience. You kept the lessons. 💸",
+    "Said you were the one. Said that to three people that year. 😭",
   ];
 
   // ═══════════════════════════════════════════════
@@ -150,15 +207,15 @@ class ContentPools {
   // ═══════════════════════════════════════════════
   static const List<String> intimateTraits = [
     "Big energy in one room. Completely missing in every other room. 😤",
-    "The physical was unforgettable. The emotional was unavailable. 💔",
-    "Four minutes of passion and expects a standing ovation 😂",
-    "Confident in bed based entirely on self-reviews 📊",
-    "Very enthusiastic physically. Very absent about everything else. ⚡",
-    "The chemistry kept you longer than the red flags should have allowed 🚩",
+    "Four minutes of action and expects a standing ovation 😂",
+    "Overconfident in areas where the reviews have not been verified 📊",
+    "The physical kept you longer than the red flags should have allowed 🚩",
     "Uses intimacy to avoid every conversation that actually matters 🤫",
-    "All that energy for one thing. None left for the relationship itself. 😮",
-    "Late night energy hits very different from afternoon energy 🌙",
-    "The connection was real. Just not built to survive everything else. 🧪",
+    "All that energy for one thing. Nothing left for the relationship. 😮",
+    "Late night energy is very different from afternoon energy 🌙",
+    "The connection felt real. It was. Just not enough on its own. 🧪",
+    "Knows exactly one way to fix an argument. Only one. 😂",
+    "Small equipment, massive audacity. The confidence has no basis. 😂",
   ];
 
   // ═══════════════════════════════════════════════
@@ -166,29 +223,31 @@ class ContentPools {
   // ═══════════════════════════════════════════════
   static const List<String> appearanceTraits = [
     "Has a face that makes you overlook things you absolutely should not 😮",
-    "Tall and knows it. Uses it. Constantly. 📏",
-    "Short but the energy is enormous. Compensating perfectly. 👑",
-    "Physically blessed. Emotionally still loading. 🧪",
-    "Beautiful in a way that distracts you from the pattern 🌹",
-    "Looks like a main character. Behaves like a plot twist. 🎬",
-    "Body goals. Communication goals still in development. 💪",
+    "Tall and uses height as a whole personality. That is it. 📏",
+    "Short but the energy could fill a stadium. Compensating perfectly. 👑",
+    "Physically blessed. Emotionally still in buffering mode. 🧪",
+    "Beautiful in a way that distracts from the pattern 🌹",
+    "Body goals. Communication goals still pending. 💪",
     "Attractive enough to get away with things. Knows this fully. 💅",
-    "Presence alone makes people excuse behavior that deserves none ✨",
+    "The big nyash alone has cleared many men of common sense 😂🍑",
+    "Big chest small sense or big sense small chest — pick your poison 😂",
     "The looks pulled you in. The character is still revealing itself. 🔍",
   ];
 
   // ═══════════════════════════════════════════════
-  //  LYING TRAITS
+  //  LYING / MANIPULATION TRAITS
   // ═══════════════════════════════════════════════
   static const List<String> lyingTraits = [
     "Lies with the kind of calm that makes you question your own memory 🧠",
+    "Thousand exes but tells everyone they are practically a saint 😂😇",
+    "Claims virgin like the exes do not exist. They exist. They are in his contacts. 😭",
     "Never caught in a full lie. Always surrounded by half truths. 🔍",
-    "Their version of events is always where they are less responsible 📋",
-    "Says I would never with complete confidence. Has. Might again. 💀",
+    "Pretender of the first class. Public image and private reality are strangers. 🎭",
+    "Acts innocent, holy, unbothered. Instagram versus reality is a documentary. 📱",
+    "Says I would never with complete conviction. Has. Will likely again. 💀",
     "Makes you feel crazy for noticing things that are genuinely there 👁️",
-    "Tells you what you need to hear then adjusts the story later 🔄",
-    "Tells one story to you. Different one to everyone else. 🎭",
-    "Apologizes just enough to reset the clock. Never enough to change. ⏰",
+    "Tells one story to you. Completely different one to everyone else. 🎭",
+    "Apologizes just enough to reset the clock. Never enough to actually change. ⏰",
   ];
 
   // ═══════════════════════════════════════════════
@@ -196,31 +255,33 @@ class ContentPools {
   // ═══════════════════════════════════════════════
   static const List<String> cheatingTraits = [
     "Has a work friend that texts at hours work does not require 📱",
+    "Womanizer wearing a loyal man costume. The costume is slipping. 🎭🚩",
     "Nothing happened but the details are too specific for nothing 🔍",
     "Location never on. Always knows exactly where you are. 📍",
-    "Has people you have heard about but have never been allowed to meet 👥",
-    "Treats loyalty like a setting they can toggle on and off 🔄",
+    "Has people you have heard about but never been allowed to meet 👥",
+    "Treats loyalty like a switch they can toggle based on opportunity 🔄",
     "Gets caught and somehow you end up being the one apologizing 😤",
-    "The gaps in their timeline are small but definitely there 🕐",
-    "Was loyal. Then the opportunity arrived. Then loyalty became optional. 🎲",
+    "Was loyal. Then the opportunity arrived. Loyalty became optional. 🎲",
+    "Their DMs are a separate social life you do not have access to 📱",
+    "Sweet to your face. Running a whole operation behind your back. 😂💀",
   ];
 
   // ═══════════════════════════════════════════════
   //  TWISTS
   // ═══════════════════════════════════════════════
   static const List<String> twists = [
-    "But when they are genuinely good to you? That part is honestly hard to find 🤍",
+    "But when they are genuinely good to you? That part is honestly rare 🤍",
     "Despite everything... one of the realest people you have been around 💛",
-    "The chaos comes with some of the most honest moments you will ever have 💬",
+    "The chaos comes with some of the most genuine moments you will have 💬",
     "When they actually show up they show up completely. That part is real. 🙌",
-    "Complicated to love correctly. But people who figure it out rarely regret it. 💡",
-    "Has been hurt in ways that explain the behavior. Not excuse it. Explain it. 💔",
+    "Complicated to love correctly. People who figure it out rarely regret it. 💡",
+    "Has been hurt in ways that explain but do not excuse the behavior 💔",
     "Still one of the few people who made you feel genuinely seen 👁️",
-    "Their love language is still being translated. Something real is underneath. 🗝️",
-    "The connection was real. The timing and the walls were the problem. Not the feeling. 🌫️",
-    "Will be someone great love story. Whether it is yours depends on them doing the work. 📖",
-    "A lot going on inside. Most of it survivable. Some of it genuinely beautiful. 🌟",
-    "Everyone who has loved them left a mark. Those marks explain a lot. 🖊️",
+    "The connection was real. The timing and the walls were the problem. 🌫️",
+    "A lot going on inside. Most of it survivable. Some of it beautiful. 🌟",
+    "Will be someone great love story. Whether it is yours depends on them. 📖",
+    "Sweet boy/girl energy is still in there somewhere. Deep. Very deep. 😂🤍",
+    "Everyone who has loved them left a mark. Those marks explain the patterns. 🖊️",
   ];
 
   // ═══════════════════════════════════════════════
@@ -234,7 +295,7 @@ class ContentPools {
     'high':
         "🔴 Risk Level: HIGH\nYou already know. The question is what you will do about it.",
     'extreme':
-        "🚨 Risk Level: EXTREME\nSome lessons cost more than others. This one is expensive.",
+        "🚨 Risk Level: EXTREME\nSome lessons cost more than others. This one is expensive. Run.",
   };
 
   // ═══════════════════════════════════════════════
@@ -244,162 +305,178 @@ class ContentPools {
     "Pure entertainment. We do not actually know your {name}. But we know the type 😂",
     "Not all {name}s are like this. Yours might be the exception. We said might.",
     "Satire. But the best satire is the kind that feels a little too real 🎭",
-    "We made this up. Based on patterns everyone has seen before. Do not at us.",
-    "Generated by vibes, not science. The vibes are usually right though 😂",
+    "We made this up. Based on patterns everyone has seen. Do not at us.",
+    "Generated by vibes not science. The vibes are usually right though 😂",
     "For entertainment only. The accuracy is purely coincidental. Allegedly.",
     "Share this. Make your friends uncomfortable too. That is community 😂",
-    "Not therapy. But cheaper. And more honest about the patterns.",
     "If this hit different, that is between you and your {name} 😅",
     "No {name}s were harmed. Feelings maybe. {name}s, no 🙏",
+    "Not therapy. But cheaper. And more honest about the patterns.",
   ];
 
   // ═══════════════════════════════════════════════
-  //  SPECIAL NAME RESPONSES — Short punchy viral
+  //  SPECIAL NAME RESPONSES
   // ═══════════════════════════════════════════════
   static const Map<String, List<String>> specialNames = {
     'emmanuel': [
-      "People named Emmanuel always have small d*ck energy but somehow still attract women everywhere 😂",
-      "Sweet boy though, God bless them 🙏 Always the one you end up forgiving 😭",
+      "People named Emmanuel always get small d*ck energy but somehow still collect women everywhere 😂",
+      "Sweet boy though. God bless them. You always end up forgiving Emmanuel somehow. 🙏😭",
     ],
     'jessica': [
-      "Jessica has been through it. Still thinks the next one will be different. He is the same. 🚩",
+      "Jessica has been through it and still thinks the next one will be different. He is the same. 🚩",
       "Knows exactly what she wants and will absolutely not tell you what that is 😂💅",
     ],
     'michael': [
       "Michael says he is not like other guys. Michael is exactly like other guys. 😂",
-      "Very emotionally available in month one. Very gone by month four. 👻",
+      "Classic womanizer with a good smile. Very emotionally available for exactly 30 days. 👻",
     ],
     'sarah': [
-      "Sarah remembers everything. Everything. You said something wrong in 2019 and she has receipts. 😭📋",
-      "Different energy with different people. The real one shows up at 2am. 🌙",
+      "Sarah remembers everything. Everything. You said something wrong in 2019. She has receipts. 😭📋",
+      "Claims innocence. Her ex count has its own chapter. 😂",
     ],
     'james': [
       "James will ghost you for three days and come back like he just went to the shop 😂",
-      "Reliable in the ways that require zero emotional effort. Complicated everywhere else. 😤",
+      "Sugar boy disguised as a good man. Watch the pattern. 💸",
     ],
     'david': [
       "David thinks being mysterious is a personality. It is not. But here we are. 🕵️",
-      "Will leave you on read and double text you a week later. Same David. Every time. 📱",
+      "Womanizer with a quiet face. The quiet ones always have a roster. 😂📱",
     ],
     'emma': [
-      "Emma feels everything deeply and protects herself by feeling nothing visibly. The math is traumatizing. 😮",
-      "The Emma you get publicly and the Emma at midnight are two different characters 🌙",
+      "Emma has more exes than she admits and claims she has never done anything. The math. 😂😇",
+      "Pretender energy but lovable honestly. You always forgive Emma. 🎭",
     ],
     'chris': [
-      "Chris peaked in a story he tells at every gathering and we all know it 😂🏆",
+      "Chris is a womanizer who does not know he is a womanizer. The worst kind. 😂🚩",
       "Grand gesture after the damage. Pattern repeats. Chris remains Chris. 🌹",
     ],
     'jennifer': [
-      "Jennifer loves hard enough to heal you. Also hard enough to break you if not careful. 💔",
-      "Blocks you. Unblocks you. Repeat. Jennifer has done this twelve times already. 😂📵",
+      "Jennifer has blocked and unblocked you so many times you lost count 😂📵",
+      "Thousand exes and still claims she is practically untouched. Jennifer please. 😭",
     ],
     'silas': [
       "Silas is quiet in a way that makes you project your whole imagination onto the silence 🌫️",
-      "Something is definitely underneath that calm. Nobody has confirmed what yet. 🌊",
+      "Small d*ck energy wrapped in big mystery. Unwrap with caution. 😂",
     ],
     'victor': [
-      "Victor wins every argument. Victor loses every relationship. The correlation is obvious. 🏆😭",
-      "More pride than patience. More confidence than follow-through. Very Victor. 😤",
+      "Victor wins every argument. Victor loses every relationship. The correlation is not coincidental. 🏆😭",
+      "No dey gree for anybody. Will die on every hill including the ones he created. 😤",
     ],
     'blessing': [
       "Named Blessing but has given some very questionable ones in this relationship 😂🙏",
-      "A genuine blessing to be around. Until you need something real from them. 💔",
+      "Gold digger energy with an innocent face. The smile is the trap. 💛😂",
     ],
     'grace': [
-      "Carries herself with quiet grace. Carries her chaos even quieter. 🦢",
-      "Graceful on the outside. Running from something on the inside. We see it. 🏃",
+      "Grace carries big nyash energy and knows exactly the power she has. Uses it wisely. 😂🍑",
+      "Graceful on the outside. Running her own agenda on the inside. 🦢",
     ],
     'daniel': [
       "Daniel means well. Daniel also means nothing on the days it actually matters. 📋",
-      "Shows up when it costs nothing. Complicated when actual effort is required. 😮",
+      "Sugar boy in disguise. Checks your account balance before catching feelings. 💸",
     ],
     'favour': [
-      "Does favours and keeps a quiet ledger you did not know existed. Nothing is free with Favour. 📊",
-      "The name says one thing. The energy says I will remember this later. 🤝",
+      "Does favours and keeps a quiet ledger you did not know existed. Nothing is free. 📊",
+      "Gold digger with a beautiful name. Favour always finds favour in the right pockets. 💰",
     ],
     'chidi': [
       "Chidi overthinks everything except the things that actually need thinking 🧠",
-      "Smart enough to see every problem clearly. Stubborn enough not to fix one. 📚😭",
+      "Too proud to apologize. Too stubborn to change. Confused why nothing works. 💀",
     ],
     'tunde': [
-      "Tunde is charming enough to get away with things he should not get away with 😏",
-      "Shows up fully when it suits him. The consistency problem is very consistent. 📅😂",
+      "Tunde is a womanizer with charisma that makes it feel acceptable. It is not. 😏🚩",
+      "Classic Yoruba demon energy. The charm is real. The intentions are seasonal. 😂",
     ],
     'chioma': [
-      "Warm, real, and complicated in the most human way possible. Also slightly terrifying. 🌶️",
-      "You think you fully understand Chioma. You are about 40 percent there. 💅",
+      "Warm, real, and has claimed innocence despite a very interesting history 😂🌶️",
+      "Big nyash energy. Knows it. Has weaponized it since secondary school. 😂🍑",
     ],
     'emeka': [
-      "Emeka provides everything except emotional availability. Generous in all wrong categories. 💪",
-      "Will fix your car, your sink and your generator. Will not fix the communication. 🔧😭",
+      "Emeka provides everything except emotional availability. The classic package. 💪",
+      "No dey gree for any woman o. Head strong pass iron. 😂😤",
     ],
     'ada': [
-      "Ada is soft until she is not and the transition has zero warning signs 🌊",
-      "Her standards are high because she has been let down before. Read that again. 💔",
+      "Ada has big nyash and even bigger standards. Both are non-negotiable. 🍑💅",
+      "Her standards are high because she has been let down by too many Emekas. 💔",
     ],
     'tobi': [
-      "Tobi means well and follows through inconsistently and is always surprised by this 😂📋",
-      "The version of Tobi still becoming is worth something. Current version still loading. ⏳",
+      "Tobi is a womanizer who genuinely believes he is a one-woman man. Classic Tobi. 😂🚩",
+      "Sugar boy tendencies but blames the women for funding him. Very Tobi. 💸",
     ],
     'kemi': [
-      "Kemi will give you her whole heart and expect you to handle it carefully. Most people do not. 💔",
-      "Her silence says everything. Most people never learn to read it. 🔇",
+      "Kemi will give you her whole heart and expects careful handling. Most men fail. 💔",
+      "Small breast, big attitude, enormous standards. The full Kemi package. 😂💅",
     ],
     'biodun': [
-      "Has a whole life happening that you only get partial access to. By design. 🚪",
-      "The charm is real. What is behind it takes time and patience to fully see. 🔍",
+      "Has a whole roster and manages them like a project. Very organized womanizer. 📋😂",
+      "The charm is real. What is behind it is a very busy schedule you are not aware of. 🔍",
     ],
     'ayo': [
-      "Very joyful energy on the outside. Very complicated on the inside. The name is aspirational. 😂",
-      "Ayo brings the party. The party eventually needs to go home. Ayo does not always leave with it. 🎉😅",
+      "Very joyful energy. Very complicated roster. The name is aspirational. 😂",
+      "Ayo brings the party and the party comes with many women. Many. 🎉😅",
     ],
     'ngozi': [
-      "Ngozi knows her worth. She also knows yours. She is keeping score. 📊💅",
-      "Beautiful, strong, and will not tolerate nonsense. Which is why she keeps encountering it. 😮",
+      "Ngozi has big nyash energy and knows her worth down to the last kobo. 📊💅",
+      "Gold digger energy or just knows what she deserves? Hard to tell. Both valid. 😂💰",
     ],
     'kevin': [
-      "Kevin is a very common name with very uncommon levels of audacity 😂",
-      "Kevin genuinely believes he is the exception to every rule about Kevins. He is not. 💀",
+      "Kevin is a common name with very uncommon audacity levels 😂",
+      "Small d*ck energy in a tall body. The packaging is misleading. 😂💀",
     ],
     'peter': [
-      "Peter denied something important three times and the tradition continues 😂🙏",
-      "Very reliable in theory. The theory and practice have a complicated relationship. 😮",
+      "Peter denied three times and the tradition continues in modern dating 😂🙏",
+      "Claims he is not a womanizer. His phone contacts are named by location. 😭",
     ],
     'john': [
-      "There are many Johns in the world. Yours is giving very specific John energy right now. 👀",
-      "Simple name. Complicated behavior. Classic John. 😭",
+      "There are many Johns. Yours is giving very specific womanizer John energy. 👀",
+      "Simple name. Very complicated roster. Classic John. 😭",
     ],
     'mary': [
-      "Gentle, kind and has been taken for granted by at least three people who did not deserve her 💔",
-      "Mary forgives. Mary forgets. Mary will eventually not do either anymore. Remember that. 😤",
+      "Gentle, kind, and has been taken for granted by men who did not deserve her 💔",
+      "Claims innocence with the energy of someone with a very full history. Mary please. 😂",
     ],
     'love': [
-      "Named Love but the love they give comes with specific terms and conditions 😂💔",
-      "The most romantic name in the room. The most complicated person in the relationship. 🌹",
+      "Named Love but the love comes with terms and conditions and a minimum balance 😂💔",
+      "Gold digger with the most ironic name possible. Very Love. 💛💰",
     ],
     'peace': [
-      "Named Peace. Absolute chaos follows them everywhere they go. 😂🌪️",
-      "Will disrupt your entire life and genuinely believe they are the calm one. Very Peace. 💅",
+      "Named Peace. Brings chaos everywhere they go. No dey gree for anybody. 😂🌪️",
+      "Will quarrel you into the next week and still claim they are the calm one. 💅",
     ],
     'mercy': [
-      "Will show you mercy. Once. After that the accounting begins. 📊😂",
-      "Has grace for everyone except the person who hurt them last. Understandable honestly. 😤",
+      "Will show mercy once. After that the accounting starts. No more mercy. 📊😂",
+      "Small breast but the wahala she carries is enormous. Do not be fooled. 😂",
     ],
     'joshua': [
-      "Joshua fought battles. Joshua is currently fighting the battle of replying to your text. 😂",
-      "Called by God. Unavailable to you apparently. 😭🙏",
+      "Joshua fought battles. Currently fighting the battle of replying to your message. 😂",
+      "Womanizer with Bible verses. The combination is very Joshua. 😭🙏",
     ],
     'samuel': [
-      "Samuel was called. The call was not telling him to communicate better though. 😂",
-      "God-fearing, well-meaning, and somehow always in the middle of something complicated. 😮",
+      "Samuel was called. The call was not about communication or loyalty though. 😂",
+      "God-fearing, well-meaning, and secretly a sugar boy. Very Samuel. 😮🙏",
     ],
     'esther': [
-      "Esther saved a whole nation. Will not save this relationship from her own silence though. 😭",
-      "Royal energy. Also very selective about who deserves access to the real her. 👑",
+      "Esther saved a whole nation. Will not save this relationship from her gold digger tendencies. 😭",
+      "Royal energy, expensive taste, your salary is being evaluated quietly. 👑💰",
     ],
     'ruth': [
-      "Where you go I will go energy in the beginning. Boundaries appear later. 😂",
-      "Loyal to a fault. The fault part is the problem. 💔",
+      "Where you go I will go energy until the money gets small. Then Ruth reassesses. 😂",
+      "Loyal to a fault until she finds someone taller with more zeros in the account. 💸",
+    ],
+    'solomon': [
+      "Solomon had a thousand wives and it worked out perfectly. This one has the same energy. 😂",
+      "Very wise in every area except choosing one person and staying. Very Solomon. 💀",
+    ],
+    'deborah': [
+      "Deborah led armies. This Deborah leads arguments and has never lost one in life. 😂",
+      "No dey gree for any man, any woman, any situation. Deborah stands her ground always. 😤",
+    ],
+    'chibuzor': [
+      "God is good. Chibuzor, however, is complicated. Let us separate the two. 😂🙏",
+      "Claims to be God-given but the behavior is very man-made. 💀",
+    ],
+    'ifeanyi': [
+      "There is what God has done and then there is what Ifeanyi has done to your heart. Different things. 😭",
+      "Classic womanizer with an innocent name. Ifeanyi knows exactly what he is doing. 😏",
     ],
   };
 }

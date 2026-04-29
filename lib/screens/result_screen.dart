@@ -54,11 +54,11 @@ class _ResultScreenState extends State<ResultScreen>
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
 
-                      // ── Intro ──
+                      // ── Intro card ──
                       _buildIntroCard(),
                       const SizedBox(height: 16),
 
-                      // ── Traits (3 or 4, clean, no ads between) ──
+                      // ── All traits in one clean card ──
                       _buildTraitsCard(),
                       const SizedBox(height: 16),
 
@@ -66,9 +66,21 @@ class _ResultScreenState extends State<ResultScreen>
                       _buildChaosMeter(),
                       const SizedBox(height: 16),
 
+                      // 🔥 AD SLOT 1 — inline banner between meter and twist
+                      if (!AdService.instance.isPremium)
+                        AdService.instance.buildInlineBanner(),
+                      if (!AdService.instance.isPremium)
+                        const SizedBox(height: 16),
+
                       // ── Twist ──
                       _buildTwistCard(),
                       const SizedBox(height: 16),
+
+                      // 🔥 AD SLOT 2 — remove ads prompt
+                      if (!AdService.instance.isPremium)
+                        AdService.instance.buildRemoveAdsPrompt(context),
+                      if (!AdService.instance.isPremium)
+                        const SizedBox(height: 16),
 
                       // ── Risk ending ──
                       _buildRiskCard(),
@@ -84,10 +96,10 @@ class _ResultScreenState extends State<ResultScreen>
             ),
           ),
 
-          // ── Action buttons (outside the scroll) ──
+          // ── Action buttons ──
           _buildActionButtons(),
 
-          // ── ONE banner ad — only at very bottom, outside result card ──
+          // 🔥 AD SLOT 3 — bottom banner always
           if (!AdService.instance.isPremium)
             AdService.instance.buildBannerWidget(),
         ],
@@ -146,27 +158,19 @@ class _ResultScreenState extends State<ResultScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 48),
-
-                // Animated flag
                 AnimatedBuilder(
                   animation: _flagController,
                   builder: (_, __) => Transform.rotate(
                     angle: (_flagController.value - 0.5) * 0.16,
-                    child: Text(
-                      widget.result.flagEmoji,
-                      style: const TextStyle(fontSize: 60),
-                    ),
+                    child: Text(widget.result.flagEmoji,
+                        style: const TextStyle(fontSize: 60)),
                   ),
                 ).animate().scale(
-                      begin: const Offset(0.2, 0.2),
-                      end: const Offset(1.0, 1.0),
-                      duration: 700.ms,
-                      curve: Curves.elasticOut,
-                    ),
-
+                    begin: const Offset(0.2, 0.2),
+                    end: const Offset(1.0, 1.0),
+                    duration: 700.ms,
+                    curve: Curves.elasticOut),
                 const SizedBox(height: 10),
-
-                // Name
                 Text(
                   widget.result.name,
                   style: GoogleFonts.poppins(
@@ -175,24 +179,20 @@ class _ResultScreenState extends State<ResultScreen>
                     color: Colors.white,
                     shadows: [
                       Shadow(
-                        color: _primaryColor.withOpacity(0.5),
-                        blurRadius: 24,
-                      ),
+                          color: _primaryColor.withOpacity(0.5),
+                          blurRadius: 24)
                     ],
                   ),
                 ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
-
-                const SizedBox(height: 4),
-
-                // Chaos level badge
+                const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 14, vertical: 4),
                   decoration: BoxDecoration(
                     color: _primaryColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(20),
-                    border:
-                        Border.all(color: _primaryColor.withOpacity(0.4)),
+                    border: Border.all(
+                        color: _primaryColor.withOpacity(0.4)),
                   ),
                   child: Text(
                     widget.result.chaosLevelText,
@@ -219,33 +219,25 @@ class _ResultScreenState extends State<ResultScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Label
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 3),
-                decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(20),
-                  border:
-                      Border.all(color: _primaryColor.withOpacity(0.4)),
-                ),
-                child: Text(
-                  'PROFILE REPORT',
-                  style: GoogleFonts.poppins(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: _primaryColor,
-                    letterSpacing: 1.5,
-                  ),
-                ),
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            decoration: BoxDecoration(
+              color: _primaryColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: _primaryColor.withOpacity(0.4)),
+            ),
+            child: Text(
+              'PROFILE REPORT',
+              style: GoogleFonts.poppins(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: _primaryColor,
+                letterSpacing: 1.5,
               ),
-            ],
+            ),
           ),
           const SizedBox(height: 14),
-
-          // Intro text
           Text(
             widget.result.intro,
             style: GoogleFonts.poppins(
@@ -261,7 +253,7 @@ class _ResultScreenState extends State<ResultScreen>
   }
 
   // ─────────────────────────────────────────────
-  /// All traits in ONE clean card — no ads between them
+  /// All 3-4 traits in one card — NO ads inside
   Widget _buildTraitsCard() {
     final traits = widget.result.traits;
     return _Card(
@@ -269,7 +261,6 @@ class _ResultScreenState extends State<ResultScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             children: [
               const Text('🔎', style: TextStyle(fontSize: 16)),
@@ -280,15 +271,11 @@ class _ResultScreenState extends State<ResultScreen>
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: Colors.white70,
-                  letterSpacing: 0.3,
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
-          // Trait items
           ...traits.asMap().entries.map((e) {
             final i = e.key;
             final trait = e.value;
@@ -298,7 +285,6 @@ class _ResultScreenState extends State<ResultScreen>
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Number bubble
                   Container(
                     width: 28,
                     height: 28,
@@ -320,8 +306,6 @@ class _ResultScreenState extends State<ResultScreen>
                     ),
                   ),
                   const SizedBox(width: 12),
-
-                  // Trait text
                   Expanded(
                     child: Text(
                       trait,
@@ -365,7 +349,7 @@ class _ResultScreenState extends State<ResultScreen>
               const Text('🌀', style: TextStyle(fontSize: 16)),
               const SizedBox(width: 8),
               Text(
-                'But here\'s the thing...',
+                'But here is the thing...',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -435,10 +419,7 @@ class _ResultScreenState extends State<ResultScreen>
               widget.result.ending.split('\n').skip(1).join('\n'),
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: Colors.white60,
-                height: 1.6,
-              ),
+                  fontSize: 13, color: Colors.white60, height: 1.6),
             ),
           ],
         ],
@@ -453,17 +434,13 @@ class _ResultScreenState extends State<ResultScreen>
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.03),
         borderRadius: BorderRadius.circular(14),
-        border:
-            Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
       ),
       child: Text(
         widget.result.disclaimer,
         textAlign: TextAlign.center,
         style: GoogleFonts.poppins(
-          fontSize: 12,
-          color: Colors.white38,
-          height: 1.6,
-        ),
+            fontSize: 12, color: Colors.white38, height: 1.6),
       ),
     ).animate().fadeIn(delay: 650.ms);
   }
@@ -475,23 +452,19 @@ class _ResultScreenState extends State<ResultScreen>
       decoration: BoxDecoration(
         color: const Color(0xFF0D0D1A),
         border: Border(
-          top: BorderSide(
-              color: Colors.white.withOpacity(0.07), width: 1),
+          top: BorderSide(color: Colors.white.withOpacity(0.07)),
         ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Share — primary CTA
           _GradientButton(
             label: '🚩  Share This Report',
             colors: const [Color(0xFF00B4D8), Color(0xFF0066CC)],
             glowColor: const Color(0xFF00B4D8),
             onTap: _onShare,
           ),
-
           const SizedBox(height: 10),
-
           Row(
             children: [
               Expanded(
@@ -535,36 +508,30 @@ class _ResultScreenState extends State<ResultScreen>
         AdService.instance.setPremium(true);
         if (mounted) {
           setState(() {});
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('🎉 Ads removed for this session!'),
-              backgroundColor: const Color(0xFF00C853),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: const Text('Ads removed for this session!'),
+            backgroundColor: const Color(0xFF00C853),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+          ));
         }
       },
       onFailed: () {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('😅 Ad not ready — try again shortly'),
-              backgroundColor: const Color(0xFFFF6B00),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: const Text('Ad not ready — try again shortly'),
+            backgroundColor: const Color(0xFFFF6B00),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+          ));
         }
       },
     );
   }
 }
 
-// ─────────────────────────────────────────────────
-// Share bottom sheet
 // ─────────────────────────────────────────────────
 class _ShareSheet extends StatelessWidget {
   final AnalysisResult result;
@@ -578,26 +545,21 @@ class _ShareSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 40, height: 4,
-            decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2)),
-          ),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2))),
           const SizedBox(height: 20),
-          Text(
-            'Share ${result.name}\'s Report 🚩',
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
-          ),
+          Text('Share ${result.name} Report 🚩',
+              style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white)),
           const SizedBox(height: 6),
-          Text(
-            'Send it to someone who needs to see this 😂',
-            style: GoogleFonts.poppins(
-                fontSize: 13, color: Colors.white54),
-          ),
+          Text('Send it to someone who needs to see this 😂',
+              style: GoogleFonts.poppins(
+                  fontSize: 13, color: Colors.white54)),
           const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -640,16 +602,16 @@ class _ShareBtn extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            width: 58, height: 58,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: color.withOpacity(0.35)),
-            ),
-            child: Center(
-                child: Text(emoji,
-                    style: const TextStyle(fontSize: 26))),
-          ),
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: color.withOpacity(0.35)),
+              ),
+              child: Center(
+                  child:
+                      Text(emoji, style: const TextStyle(fontSize: 26)))),
           const SizedBox(height: 8),
           Text(label,
               style: GoogleFonts.poppins(
@@ -662,8 +624,6 @@ class _ShareBtn extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────
-// Reusable widgets
 // ─────────────────────────────────────────────────
 class _Card extends StatelessWidget {
   final Widget child;
@@ -681,10 +641,9 @@ class _Card extends StatelessWidget {
         border: Border.all(color: Colors.white.withOpacity(0.07)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
+              color: Colors.black.withOpacity(0.18),
+              blurRadius: 16,
+              offset: const Offset(0, 6))
         ],
       ),
       child: child,
@@ -700,12 +659,11 @@ class _GradientButton extends StatelessWidget {
   final List<Color> colors;
   final Color glowColor;
   final VoidCallback onTap;
-  const _GradientButton({
-    required this.label,
-    required this.colors,
-    required this.glowColor,
-    required this.onTap,
-  });
+  const _GradientButton(
+      {required this.label,
+      required this.colors,
+      required this.glowColor,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -718,21 +676,17 @@ class _GradientButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: glowColor.withOpacity(0.35),
-              blurRadius: 18,
-              offset: const Offset(0, 6),
-            ),
+                color: glowColor.withOpacity(0.35),
+                blurRadius: 18,
+                offset: const Offset(0, 6))
           ],
         ),
         child: Center(
-          child: Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
+          child: Text(label,
+              style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white)),
         ),
       ),
     );
@@ -743,11 +697,10 @@ class _OutlineButton extends StatelessWidget {
   final String label;
   final Color color;
   final VoidCallback onTap;
-  const _OutlineButton({
-    required this.label,
-    this.color = Colors.white54,
-    required this.onTap,
-  });
+  const _OutlineButton(
+      {required this.label,
+      this.color = Colors.white54,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -760,14 +713,11 @@ class _OutlineButton extends StatelessWidget {
           border: Border.all(color: color.withOpacity(0.35)),
         ),
         child: Center(
-          child: Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
+          child: Text(label,
+              style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: color)),
         ),
       ),
     );
