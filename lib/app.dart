@@ -7,6 +7,7 @@ import 'screens/result_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/premium_screen.dart';
 import 'models/analysis_result.dart';
+import 'widgets/app_overlay_wrapper.dart';
 
 class RedFlagNamesApp extends StatelessWidget {
   const RedFlagNamesApp({super.key});
@@ -19,6 +20,10 @@ class RedFlagNamesApp extends StatelessWidget {
       theme: _buildTheme(),
       initialRoute: '/',
       onGenerateRoute: _generateRoute,
+      // ── Global full-screen overlays (connectivity + ad-block) ──────────────
+      // builder wraps every screen, so overlays appear regardless of route.
+      builder: (context, child) =>
+          AppOverlayWrapper(child: child ?? const SizedBox.shrink()),
     );
   }
 

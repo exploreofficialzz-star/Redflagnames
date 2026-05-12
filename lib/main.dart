@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
 import 'services/notification_service.dart';
 import 'services/ad_service.dart';
+import 'services/connectivity_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +34,9 @@ void main() async {
 
   // Init prefs
   await SharedPreferences.getInstance();
+
+  // Initialize connectivity monitoring (must be last before runApp)
+  await ConnectivityService.instance.initialize();
 
   runApp(const RedFlagNamesApp());
 }
