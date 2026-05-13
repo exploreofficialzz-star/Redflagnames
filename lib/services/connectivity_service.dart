@@ -2,100 +2,151 @@ import 'dart:async';
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-/// The possible connectivity states of the app.
+/// All possible app-level connectivity states.
 enum ConnectivityStatus {
-  /// No network interface at all (airplane mode / no SIM / no WiFi)
+  /// No network interface active (airplane mode, no SIM, no WiFi).
   noNetwork,
 
-  /// Connected to a network but no real internet traffic can flow
-  /// (e.g. connected to a WiFi router that has no WAN link, or mobile
-  ///  with exhausted data plan)
+  /// Network interface present but no real internet traffic possible
+  /// (router has no WAN, exhausted mobile data plan, captive portal, etc.)
   noInternet,
 
-  /// Internet is reachable but ad-serving domains are blocked
-  /// (DNS-based or hosts-file ad-blocker detected)
+  /// Internet reachable but Google Ad infrastructure is blocked.
+  /// Detected via DNS resolution + TCP handshake on two separate ad domains.
+  /// Triggered by DNS-based blockers, VPN/proxy blockers, and hosts-file blockers.
   adsBlocked,
 
-  /// Everything is fine – show the normal app
+  /// Everything is healthy — show the normal app.
   connected,
 }
 
-/// Singleton service that continuously watches network + ad-server
-/// reachability and exposes a [statusStream] for the overlay widget.
+/// Singleton that monitors network health and emits [ConnectivityStatus]
+/// changes. Injected into [AppOverlayWrapper] via [statusStream].
 class ConnectivityService {
   static final ConnectivityService instance = ConnectivityService._();
   ConnectivityService._();
 
-  // ─── Public state ───────────────────────────────────────────────────────────
+  // ─── Public API ──────────────────────────────────────────────────────────────
   ConnectivityStatus _current = ConnectivityStatus.connected;
   ConnectivityStatus get current => _current;
 
-  final _controller =
-      StreamController<ConnectivityStatus>.broadcast();
+  final _controller = StreamController<ConnectivityStatus>.broadcast();
   Stream<ConnectivityStatus> get statusStream => _controller.stream;
 
-  // ─── Internal ────────────────────────────────────────────────────────────────
-  StreamSubscription? _connectivitySub;
+  // ─── Private ─────────────────────────────────────────────────────────────────
+  StreamSubscription? _platformSub;
   Timer? _pollTimer;
 
-  /// Call once from [main] after [WidgetsFlutterBinding.ensureInitialized].
+  /// Call once from main() after WidgetsFlutterBinding.ensureInitialized().
   Future<void> initialize() async {
-    // Immediately perform first check so the overlay shows before the
-    // first frame if needed.
     await _performCheck();
-
-    // React immediately to platform connectivity changes.
-    _connectivitySub =
+    _platformSub =
         Connectivity().onConnectivityChanged.listen((_) => _performCheck());
-
-    // Also poll every 12 s so we catch "data plan exhausted" situations
-    // that don't trigger a connectivity-change event.
     _pollTimer =
-        Timer.periodic(const Duration(seconds: 12), (_) => _performCheck());
+        Timer.periodic(const Duration(seconds: 15), (_) => _performCheck());
   }
 
+  /// Force an immediate re-check — called by overlay retry buttons.
   Future<void> retry() => _performCheck();
 
   void dispose() {
-    _connectivitySub?.cancel();
+    _platformSub?.cancel();
     _pollTimer?.cancel();
     _controller.close();
   }
 
   // ─── Check pipeline ──────────────────────────────────────────────────────────
+
   Future<void> _performCheck() async {
-    final status = await _resolveStatus();
-    if (status != _current) {
-      _current = status;
-      _controller.add(status);
+    final next = await _resolveStatus();
+    if (next != _current) {
+      _current = next;
+      _controller.add(next);
     }
   }
 
   Future<ConnectivityStatus> _resolveStatus() async {
-    // 1️⃣  Is any non-"none" interface available?
+    // 1: Does the OS report any active network interface?
     final results = await Connectivity().checkConnectivity();
-    final hasInterface =
-        results.any((r) => r != ConnectivityResult.none);
-    if (!hasInterface) return ConnectivityStatus.noNetwork;
+    if (!results.any((r) => r != ConnectivityResult.none)) {
+      return ConnectivityStatus.noNetwork;
+    }
 
-    // 2️⃣  Can we reach a neutral, highly-available host?
-    if (!await _canReach('google.com')) return ConnectivityStatus.noInternet;
+    // 2: Is real internet reachable? (neutral, ultra-reliable host)
+    if (!await _canReachViaDns('google.com')) {
+      return ConnectivityStatus.noInternet;
+    }
 
-    // 3️⃣  Can we reach Google's ad-serving infrastructure?
-    //     Ad-blockers (DNS or hosts-based) block these domains.
-    if (!await _canReach('googleads.g.doubleclick.net')) {
+    // 3: Are Google's ad-serving domains reachable?
+    //    Require BOTH domains to fail before flagging — prevents false positives.
+    if (await _isAdInfraBlocked()) {
       return ConnectivityStatus.adsBlocked;
     }
 
     return ConnectivityStatus.connected;
   }
 
-  /// DNS lookup with a 5 s timeout – fast and doesn't open a socket.
-  Future<bool> _canReach(String host) async {
+  // ─── Internet check ───────────────────────────────────────────────────────────
+
+  Future<bool> _canReachViaDns(String host) async {
     try {
-      final result =
-          await InternetAddress.lookup(host).timeout(const Duration(seconds: 5));
+      final result = await InternetAddress.lookup(host)
+          .timeout(const Duration(seconds: 6));
       return result.isNotEmpty && result.first.rawAddress.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // ─── Ad-block detection ───────────────────────────────────────────────────────
+
+  Future<bool> _isAdInfraBlocked() async {
+    final results = await Future.wait([
+      _adDomainReachable('googleads.g.doubleclick.net'),
+      _adDomainReachable('pagead2.googlesyndication.com'),
+    ]);
+    return !results[0] && !results[1];
+  }
+
+  /// Three-tier reachability check for a single ad domain:
+  ///
+  ///  Tier 1 – DNS lookup:
+  ///    Catches DNS-based blockers (NextDNS, Pi-hole, AdGuard DNS,
+  ///    1.1.1.1 for Families, custom resolver blocklists).
+  ///
+  ///  Tier 2 – Loopback / unroutable IP check:
+  ///    Catches hosts-file blockers that redirect ad domains to
+  ///    127.0.0.1, 0.0.0.0, or ::1.
+  ///
+  ///  Tier 3 – TCP handshake on port 443:
+  ///    Catches VPN-based blockers (Blokada, AdGuard for Android/iOS,
+  ///    Private DNS + blocklists) that allow DNS resolution but silently
+  ///    drop the TCP connection before any data is sent.
+  Future<bool> _adDomainReachable(String host) async {
+    // Tier 1: DNS
+    List<InternetAddress> addresses;
+    try {
+      addresses = await InternetAddress.lookup(host)
+          .timeout(const Duration(seconds: 6));
+    } catch (_) {
+      return false;
+    }
+    if (addresses.isEmpty) return false;
+
+    // Tier 2: Loopback / unroutable IP
+    final ip = addresses.first.address;
+    const loopback = {'127.0.0.1', '0.0.0.0', '::1'};
+    if (loopback.contains(ip)) return false;
+
+    // Tier 3: TCP connect
+    try {
+      final socket = await Socket.connect(
+        host,
+        443,
+        timeout: const Duration(seconds: 6),
+      );
+      socket.destroy();
+      return true;
     } catch (_) {
       return false;
     }

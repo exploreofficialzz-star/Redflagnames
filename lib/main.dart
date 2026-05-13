@@ -7,6 +7,7 @@ import 'app.dart';
 import 'services/notification_service.dart';
 import 'services/ad_service.dart';
 import 'services/connectivity_service.dart';
+import 'services/iap_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +38,9 @@ void main() async {
 
   // Initialize connectivity monitoring (must be last before runApp)
   await ConnectivityService.instance.initialize();
+
+  // Initialize IAP (loads product + restores purchases from store)
+  await IapService.instance.initialize();
 
   runApp(const RedFlagNamesApp());
 }

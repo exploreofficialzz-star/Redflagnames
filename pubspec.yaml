@@ -16,6 +16,9 @@ dependencies:
   # Connectivity
   connectivity_plus: ^6.0.5
 
+  # In-App Purchases
+  in_app_purchase: ^3.2.0
+
   # Notifications
   flutter_local_notifications: ^17.2.4
 

@@ -1,19 +1,22 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-/// AdService — Maximum aggressive monetization
-/// Interstitial: every single result
-/// Banner: every screen
-/// Rewarded: premium gate + retry gate
-/// Native: injected between traits in result screen
+import 'iap_service.dart';
+
+/// AdService — production ad management.
+///
+/// Ad-free hierarchy (highest priority wins):
+///   1. IAP purchased "Remove Ads Forever"  → permanent, survives reinstall via restore
+///   2. Rewarded ad watched                 → ad-free for 24 full hours
+///   3. Otherwise                           → all ad formats shown
 class AdService {
   static final AdService instance = AdService._();
   AdService._();
 
-  // ─────────────────────────────────────────────
-  // 🔴 REPLACE ALL WITH YOUR REAL ADMOB IDs
-  // ─────────────────────────────────────────────
+  // ─── Ad Unit IDs ─────────────────────────────────────────────────────────────
+  // 🔴 Replace test IDs with your real AdMob IDs before release.
   static String get _bannerId => Platform.isAndroid
       ? 'ca-app-pub-3940256099942544/6300978111'
       : 'ca-app-pub-3940256099942544/2934735716';
@@ -26,28 +29,49 @@ class AdService {
       ? 'ca-app-pub-3940256099942544/5224354917'
       : 'ca-app-pub-3940256099942544/1712485313';
 
-  // ─────────────────────────────────────────────
-  // State
-  // ─────────────────────────────────────────────
+  // ─── Prefs keys ──────────────────────────────────────────────────────────────
+  static const _kRewardedExpiry = 'rewarded_ad_expiry_ms';
+
+  // ─── State ───────────────────────────────────────────────────────────────────
   InterstitialAd? _interstitialAd;
   RewardedAd?     _rewardedAd;
-  bool _isPremium  = false;
   bool _loadingInterstitial = false;
   bool _loadingRewarded     = false;
 
-  bool get isPremium => _isPremium;
+  /// Millisecond epoch until which the rewarded grant is active.
+  int _rewardedExpiryMs = 0;
 
-  // ─────────────────────────────────────────────
-  // Init
-  // ─────────────────────────────────────────────
-  Future<void> initialize() async {
-    await _loadInterstitial();
-    await _loadRewarded();
+  // ─── Ad-free status ───────────────────────────────────────────────────────────
+
+  /// True when the user should NOT see any ads.
+  bool get isAdFree =>
+      IapService.instance.purchased || _isRewardedActive;
+
+  bool get _isRewardedActive =>
+      DateTime.now().millisecondsSinceEpoch < _rewardedExpiryMs;
+
+  /// How much rewarded time is left (null if not active).
+  Duration? get rewardedTimeRemaining {
+    if (!_isRewardedActive) return null;
+    return Duration(
+      milliseconds: _rewardedExpiryMs - DateTime.now().millisecondsSinceEpoch,
+    );
   }
 
-  // ─────────────────────────────────────────────
-  // BANNER — create fresh per screen
-  // ─────────────────────────────────────────────
+  // ─── Init ─────────────────────────────────────────────────────────────────────
+
+  Future<void> initialize() async {
+    final prefs = await SharedPreferences.getInstance();
+    _rewardedExpiryMs = prefs.getInt(_kRewardedExpiry) ?? 0;
+
+    if (!isAdFree) {
+      _loadInterstitial();
+      _loadRewarded();
+    }
+  }
+
+  // ─── BANNER ──────────────────────────────────────────────────────────────────
+
   BannerAd createBannerAd({AdSize size = AdSize.banner}) {
     return BannerAd(
       adUnitId: _bannerId,
@@ -59,25 +83,23 @@ class AdService {
     );
   }
 
-  /// Persistent bottom banner widget for any screen
+  /// Sticky footer banner widget — returns empty box when ad-free.
   Widget buildBannerWidget({AdSize size = AdSize.banner}) {
-    if (_isPremium) return const SizedBox.shrink();
+    if (isAdFree) return const SizedBox.shrink();
     final banner = createBannerAd(size: size)..load();
     return Container(
       height: size.height.toDouble() + 4,
       decoration: BoxDecoration(
         color: const Color(0xFF0D0D1A),
-        border: Border(
-          top: BorderSide(color: Colors.white.withOpacity(0.08)),
-        ),
+        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.08))),
       ),
       child: AdWidget(ad: banner),
     );
   }
 
-  /// Inline banner card — inject between content
+  /// Inline medium-rectangle banner — returns empty box when ad-free.
   Widget buildInlineBanner() {
-    if (_isPremium) return const SizedBox.shrink();
+    if (isAdFree) return const SizedBox.shrink();
     final banner = createBannerAd(size: AdSize.mediumRectangle)..load();
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -99,18 +121,14 @@ class AdService {
               ),
             ),
           ),
-          SizedBox(
-            height: 250,
-            child: AdWidget(ad: banner),
-          ),
+          SizedBox(height: 250, child: AdWidget(ad: banner)),
         ],
       ),
     );
   }
 
-  // ─────────────────────────────────────────────
-  // INTERSTITIAL — show every single result
-  // ─────────────────────────────────────────────
+  // ─── INTERSTITIAL ────────────────────────────────────────────────────────────
+
   Future<void> _loadInterstitial() async {
     if (_loadingInterstitial || _interstitialAd != null) return;
     _loadingInterstitial = true;
@@ -125,7 +143,7 @@ class AdService {
             ad.fullScreenContentCallback = FullScreenContentCallback(
               onAdDismissedFullScreenContent: (_) {
                 _interstitialAd = null;
-                _loadInterstitial(); // preload next immediately
+                _loadInterstitial();
               },
               onAdFailedToShowFullScreenContent: (ad, _) {
                 ad.dispose();
@@ -137,7 +155,6 @@ class AdService {
           },
           onAdFailedToLoad: (_) {
             _loadingInterstitial = false;
-            // Retry after delay
             Future.delayed(const Duration(seconds: 30), _loadInterstitial);
           },
         ),
@@ -147,21 +164,16 @@ class AdService {
     }
   }
 
-  /// Show interstitial — call after EVERY result, EVERY history view
   Future<void> showInterstitial(BuildContext context) async {
-    if (_isPremium) return;
+    if (isAdFree) return;
     try {
-      if (_interstitialAd != null) {
-        await _interstitialAd!.show();
-      }
+      if (_interstitialAd != null) await _interstitialAd!.show();
     } catch (_) {}
-    // Always preload next
     _loadInterstitial();
   }
 
-  // ─────────────────────────────────────────────
-  // REWARDED — premium gate + retry gate
-  // ─────────────────────────────────────────────
+  // ─── REWARDED ────────────────────────────────────────────────────────────────
+
   Future<void> _loadRewarded() async {
     if (_loadingRewarded || _rewardedAd != null) return;
     _loadingRewarded = true;
@@ -197,6 +209,9 @@ class AdService {
     }
   }
 
+  bool get rewardedReady => _rewardedAd != null;
+
+  /// Shows the rewarded ad. On success, grants 24 hours of ad-free access.
   Future<bool> showRewarded({
     required VoidCallback onRewarded,
     VoidCallback? onFailed,
@@ -209,8 +224,9 @@ class AdService {
     bool rewarded = false;
     try {
       await _rewardedAd!.show(
-        onUserEarnedReward: (_, __) {
+        onUserEarnedReward: (_, __) async {
           rewarded = true;
+          await _grantRewardedAccess();
           onRewarded();
         },
       );
@@ -220,26 +236,23 @@ class AdService {
     return rewarded;
   }
 
-  bool get rewardedReady => _rewardedAd != null;
-
-  void setPremium(bool value) {
-    _isPremium = value;
-    if (!value) {
-      // Re-enable ads — reload
-      _loadInterstitial();
-      _loadRewarded();
-    }
+  /// Stores a 24-hour expiry timestamp in SharedPreferences.
+  Future<void> _grantRewardedAccess() async {
+    _rewardedExpiryMs = DateTime.now()
+        .add(const Duration(hours: 24))
+        .millisecondsSinceEpoch;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_kRewardedExpiry, _rewardedExpiryMs);
   }
 
-  // ─────────────────────────────────────────────
-  // Aggressive prompt widget — shows on result screen
-  // ─────────────────────────────────────────────
+  // ─── Upsell widget ────────────────────────────────────────────────────────────
+
   Widget buildRemoveAdsPrompt(BuildContext context) {
-    if (_isPremium) return const SizedBox.shrink();
+    if (isAdFree) return const SizedBox.shrink();
     return GestureDetector(
       onTap: () => Navigator.of(context).pushNamed('/premium'),
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+        margin: const EdgeInsets.symmetric(vertical: 8),
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -260,22 +273,22 @@ class AdService {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Remove All Ads — Watch a Video',
-                    style: TextStyle(
+                    'Go Ad-Free — \$2.99 Forever',
+                    style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFFFFD700),
+                      color: Color(0xFFFFD700),
                     ),
                   ),
                   Text(
-                    'Enjoy ad-free chaos for this session',
+                    'Or watch a video for 24 hrs free',
                     style: TextStyle(fontSize: 11, color: Colors.white54),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.play_circle_rounded,
-                color: Color(0xFFFFD700), size: 28),
+            const Icon(Icons.arrow_forward_ios_rounded,
+                color: Color(0xFFFFD700), size: 16),
           ],
         ),
       ),
