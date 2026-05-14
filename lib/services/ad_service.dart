@@ -8,28 +8,33 @@ import 'iap_service.dart';
 /// AdService — production ad management.
 ///
 /// Ad-free hierarchy (highest priority wins):
-///   1. IAP purchased "Remove Ads Forever"  → permanent, survives reinstall via restore
+///   1. IAP "Remove Ads Forever" purchased  → permanent
 ///   2. Rewarded ad watched                 → ad-free for 24 full hours
 ///   3. Otherwise                           → all ad formats shown
 class AdService {
   static final AdService instance = AdService._();
   AdService._();
 
-  // ─── Ad Unit IDs ─────────────────────────────────────────────────────────────
-  // 🔴 Replace test IDs with your real AdMob IDs before release.
+  // ─── Real Production Ad Unit IDs ─────────────────────────────────────────────
+  // App ID (AndroidManifest.xml): ca-app-pub-2492078126313994~6674148778
+
   static String get _bannerId => Platform.isAndroid
-      ? 'ca-app-pub-3940256099942544/6300978111'
-      : 'ca-app-pub-3940256099942544/2934735716';
+      ? 'ca-app-pub-2492078126313994/7375416963'
+      : 'ca-app-pub-2492078126313994/7375416963'; // add iOS ID when ready
 
   static String get _interstitialId => Platform.isAndroid
-      ? 'ca-app-pub-3940256099942544/1033173712'
-      : 'ca-app-pub-3940256099942544/4411468910';
+      ? 'ca-app-pub-2492078126313994/3693973666'
+      : 'ca-app-pub-2492078126313994/3693973666'; // add iOS ID when ready
 
   static String get _rewardedId => Platform.isAndroid
-      ? 'ca-app-pub-3940256099942544/5224354917'
-      : 'ca-app-pub-3940256099942544/1712485313';
+      ? 'ca-app-pub-2492078126313994/2380891994'
+      : 'ca-app-pub-2492078126313994/2380891994'; // add iOS ID when ready
 
-  // ─── Prefs keys ──────────────────────────────────────────────────────────────
+  static String get _nativeId => Platform.isAndroid
+      ? 'ca-app-pub-2492078126313994/5052505953'
+      : 'ca-app-pub-2492078126313994/5052505953'; // add iOS ID when ready
+
+  // ─── Prefs key ───────────────────────────────────────────────────────────────
   static const _kRewardedExpiry = 'rewarded_ad_expiry_ms';
 
   // ─── State ───────────────────────────────────────────────────────────────────
@@ -37,9 +42,7 @@ class AdService {
   RewardedAd?     _rewardedAd;
   bool _loadingInterstitial = false;
   bool _loadingRewarded     = false;
-
-  /// Millisecond epoch until which the rewarded grant is active.
-  int _rewardedExpiryMs = 0;
+  int  _rewardedExpiryMs    = 0;
 
   // ─── Ad-free status ───────────────────────────────────────────────────────────
 
@@ -47,15 +50,24 @@ class AdService {
   bool get isAdFree =>
       IapService.instance.purchased || _isRewardedActive;
 
+  /// Backward-compat alias used by home_screen, result_screen, history_screen.
+  bool get isPremium => isAdFree;
+
   bool get _isRewardedActive =>
       DateTime.now().millisecondsSinceEpoch < _rewardedExpiryMs;
 
-  /// How much rewarded time is left (null if not active).
+  /// How much rewarded time remains (null if not active).
   Duration? get rewardedTimeRemaining {
     if (!_isRewardedActive) return null;
     return Duration(
       milliseconds: _rewardedExpiryMs - DateTime.now().millisecondsSinceEpoch,
     );
+  }
+
+  // ─── Backward-compat setter (called by result_screen after rewarded ad) ──────
+  /// Maps the old `setPremium(true)` call to the new 24-hour rewarded grant.
+  void setPremium(bool value) {
+    if (value) _grantRewardedAccess();
   }
 
   // ─── Init ─────────────────────────────────────────────────────────────────────
@@ -91,7 +103,8 @@ class AdService {
       height: size.height.toDouble() + 4,
       decoration: BoxDecoration(
         color: const Color(0xFF0D0D1A),
-        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.08))),
+        border: Border(
+            top: BorderSide(color: Colors.white.withOpacity(0.08))),
       ),
       child: AdWidget(ad: banner),
     );
@@ -253,7 +266,8 @@ class AdService {
       onTap: () => Navigator.of(context).pushNamed('/premium'),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        padding:
+            const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -262,7 +276,8 @@ class AdService {
             ],
           ),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.4)),
+          border:
+              Border.all(color: const Color(0xFFFFD700).withOpacity(0.4)),
         ),
         child: Row(
           children: [
@@ -272,9 +287,9 @@ class AdService {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'Go Ad-Free — \$2.99 Forever',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFFFFD700),

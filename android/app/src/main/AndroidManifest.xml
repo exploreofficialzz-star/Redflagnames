@@ -14,10 +14,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:enableOnBackInvokedCallback="true">
 
-        <!-- 🔴 REPLACE WITH YOUR REAL ADMOB APP ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="ca-app-pub-2492078126313994~6674148778"/>
 
         <activity
             android:name=".MainActivity"
