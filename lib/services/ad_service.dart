@@ -291,7 +291,7 @@ class AdService {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Go Ad-Free — ${IapService.instance.available ? IapService.instance.priceString : PaystackService.instance.priceString} Forever',
+                    'Go Ad-Free — ${PaystackService.instance.priceString} Forever',
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
