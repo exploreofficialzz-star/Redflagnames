@@ -56,6 +56,12 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^4.0.0
 
+dependency_overrides:
+  # flutter_paystack requires intl ^0.17 but this project uses ^0.19.
+  # Override forces pub to use 0.19 for all packages.
+  # flutter_paystack only uses intl for card expiry formatting — fully compatible.
+  intl: ^0.19.0
+
 flutter:
   uses-material-design: true
 
