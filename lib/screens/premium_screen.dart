@@ -718,8 +718,8 @@ class _PremiumScreenState extends State<PremiumScreen>
     final text = _isGooglePlay
         ? '${iap.priceString} one-time purchase. No recurring charges.\n'
             'Applies to this Google/Apple account. Restore anytime.'
-        : '₦1,500 one-time payment via Paystack.\n'
-            'No recurring charges. Purchase is tied to this device.';
+        : '\$1.10 one-time payment via Paystack.\n'
+            'Accepted worldwide. No recurring charges.';
 
     return Text(
       _storeResolved
