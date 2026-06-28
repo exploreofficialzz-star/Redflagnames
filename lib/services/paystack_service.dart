@@ -11,15 +11,17 @@ class PaystackService {
       'pk_live_d145dd30b0e40a54e3d2533dfc544e41ea63fe94';
   static const String _prefKey = 'paystack_remove_ads_purchased';
 
-  // $1.10 USD in cents (100 cents = $1). Equivalent to ₦1,500 at current rates.
-  // Paystack auto-converts for international cards — no extra setup needed.
-  static const int amountCents = 110;
-  static const String currency = 'USD';
+  // ₦1,500 in kobo (100 kobo = ₦1). Adjust to change pricing.
+  // International Paystack-supported cards are charged the NGN equivalent automatically.
+  static const int amountKobo = 150000;
+  static const String currency = 'NGN';
 
   bool _purchased = false;
   bool get purchased => _purchased;
 
   /// Price shown to the user in the premium screen.
+  // Display price shown to users (global look).
+  // Actual transaction is ₦1,500 NGN — Paystack handles it natively.
   String get priceString => '\$1.10';
 
   Future<void> initialize() async {
@@ -66,7 +68,7 @@ class PaystackService {
         var handler = PaystackPop.setup({
           key: '$publicKey',
           email: '$email',
-          amount: $amountCents,
+          amount: $amountKobo,
           currency: '$currency',
           ref: '$reference',
           label: 'RedFlag Names',
