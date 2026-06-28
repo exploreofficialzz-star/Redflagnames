@@ -6,6 +6,7 @@ import '../services/ad_service.dart';
 import '../services/iap_service.dart';
 import '../services/paystack_service.dart';
 import '../services/store_detector_service.dart';
+import 'paystack_web_screen.dart';
 
 class PremiumScreen extends StatefulWidget {
   const PremiumScreen({super.key});
@@ -477,39 +478,34 @@ class _PremiumScreenState extends State<PremiumScreen>
         );
   }
 
-  /// Shows an email input dialog, then launches Paystack checkout.
+  /// Shows email dialog then navigates to Paystack WebView checkout.
   Future<void> _initiatePaystack() async {
     final email = await _showEmailDialog();
     if (email == null || email.isEmpty) return;
 
-    setState(() => _paystackLoading = true);
+    if (!mounted) return;
 
-    await PaystackService.instance.purchase(
-      context: context,
-      userEmail: email,
-      onSuccess: () {
-        if (!mounted) return;
-        setState(() => _paystackLoading = false);
-        Navigator.pop(context, true);
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(_snack(
-            '🎉 Ads removed forever! Enjoy the chaos!',
-            const Color(0xFF00C853),
-          ));
-        });
-      },
-      onError: (msg) {
-        if (!mounted) return;
-        setState(() => _paystackLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(_snack(
-          '❌ $msg',
-          const Color(0xFFFF3B5C),
-        ));
-      },
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaystackWebScreen(userEmail: email),
+      ),
     );
 
-    if (mounted) setState(() => _paystackLoading = false);
+    if (!mounted) return;
+
+    if (result == true) {
+      Navigator.pop(context, true);
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(_snack(
+          '🎉 Ads removed forever! Enjoy the chaos!',
+          const Color(0xFF00C853),
+        ));
+      });
+    } else {
+      setState(() => _paystackLoading = false);
+    }
   }
 
   /// Simple dialog to collect the user's email before Paystack checkout.

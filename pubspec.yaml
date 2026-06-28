@@ -19,8 +19,8 @@ dependencies:
   # In-App Purchases
   in_app_purchase: ^3.2.0
 
-  # Paystack — fallback payment for non-Play-Store installs
-  flutter_paystack: ^1.0.5
+  # Paystack — fallback payment via embedded WebView for non-Play-Store installs
+  webview_flutter: ^4.10.0
 
   # Notifications
   flutter_local_notifications: ^17.2.4
@@ -55,12 +55,6 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
-
-dependency_overrides:
-  # flutter_paystack requires intl ^0.17 but this project uses ^0.19.
-  # Override forces pub to use 0.19 for all packages.
-  # flutter_paystack only uses intl for card expiry formatting — fully compatible.
-  intl: ^0.19.0
 
 flutter:
   uses-material-design: true
