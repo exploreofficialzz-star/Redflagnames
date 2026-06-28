@@ -19,8 +19,12 @@ dependencies:
   # In-App Purchases
   in_app_purchase: ^3.2.0
 
+  # Paystack — fallback payment for non-Play-Store installs
+  flutter_paystack: ^1.0.5
+
   # Notifications
   flutter_local_notifications: ^17.2.4
+  timezone: ^0.9.4
 
   # Audio
   audioplayers: ^6.1.0

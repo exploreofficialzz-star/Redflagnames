@@ -4,6 +4,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'iap_service.dart';
+import 'paystack_service.dart';
 
 /// AdService — production ad management.
 ///
@@ -48,7 +49,9 @@ class AdService {
 
   /// True when the user should NOT see any ads.
   bool get isAdFree =>
-      IapService.instance.purchased || _isRewardedActive;
+      IapService.instance.purchased ||
+      PaystackService.instance.purchased ||
+      _isRewardedActive;
 
   /// Backward-compat alias used by home_screen, result_screen, history_screen.
   bool get isPremium => isAdFree;

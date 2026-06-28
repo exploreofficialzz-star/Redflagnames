@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart' show Color;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timezone/timezone.dart' as tz;
 import 'dart:math';
 
 class NotificationService {
@@ -10,6 +12,10 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
   final _random = Random();
   bool _initialized = false;
+
+  // Prefs key — set once so daily notifications are never re-scheduled
+  // on every app open (they auto-repeat via matchDateTimeComponents)
+  static const String _kScheduled = 'notif_daily_scheduled';
 
   static const List<String> _messages = [
     "🚩 You've been thinking about that name again, haven't you?",
@@ -108,17 +114,25 @@ class NotificationService {
     } catch (_) {}
   }
 
+  // ─── Daily Engagement Scheduling ─────────────────────────────────────────────
+  // Scheduled ONCE on first install. The OS re-fires them daily automatically
+  // via matchDateTimeComponents — no more 3 instant notifications on every open.
+
   Future<void> _scheduleEngagement() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      // Already scheduled — OS handles daily repeats from here
+      if (prefs.getBool(_kScheduled) == true) return;
+      await prefs.setBool(_kScheduled, true);
       await _plugin.cancelAll();
     } catch (_) {}
 
-    await _showEngagement(1, '☀️ Morning RedFlag Check', 10, 0);
-    await _showEngagement(2, '😂 Afternoon Chaos Report', 14, 30);
-    await _showEngagement(3, '🚩 Evening Name Analysis', 20, 0);
+    await _scheduleDailyNotification(1, '☀️ Morning RedFlag Check', 10, 0);
+    await _scheduleDailyNotification(2, '😂 Afternoon Chaos Report', 14, 30);
+    await _scheduleDailyNotification(3, '🚩 Evening Name Analysis', 20, 0);
   }
 
-  Future<void> _showEngagement(
+  Future<void> _scheduleDailyNotification(
       int id, String title, int hour, int minute) async {
     try {
       final body = _messages[_random.nextInt(_messages.length)];
@@ -136,8 +150,28 @@ class NotificationService {
         android: androidDetails,
         iOS: _iosDetails,
       );
-      await _plugin.show(id, title, body, details);
+      await _plugin.zonedSchedule(
+        id,
+        title,
+        body,
+        _nextInstanceOfTime(hour, minute),
+        details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time, // repeats daily
+      );
     } catch (_) {}
+  }
+
+  /// Returns the next TZDateTime matching [hour]:[minute].
+  /// If that time has already passed today, returns tomorrow's instance.
+  tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    tz.TZDateTime scheduled =
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    if (scheduled.isBefore(now)) {
+      scheduled = scheduled.add(const Duration(days: 1));
+    }
+    return scheduled;
   }
 
   void _onTap(NotificationResponse response) {}
